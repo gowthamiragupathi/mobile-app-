@@ -17,6 +17,11 @@ export interface Idea {
   votes: number;
   verdict: string;
   metrics: IdeaMetrics;
+  category?: string;
+  stage?: string;
+  tam?: string;
+  founderSignal?: string;
+  thesis?: string;
   createdAt: number;
 }
 
@@ -42,6 +47,11 @@ interface IdeaStore {
     rating: number;
     verdict?: string;
     metrics?: IdeaMetrics;
+    category?: string;
+    stage?: string;
+    tam?: string;
+    founderSignal?: string;
+    thesis?: string;
   }) => Idea;
   upvoteIdea: (id: string) => boolean;
   showToast: (message: string, type?: 'success' | 'info' | 'error') => void;
@@ -58,7 +68,12 @@ export const SAMPLE_IDEAS: Idea[] = [
       'DevPulse monitors distributed containerized services in real-time, leverages local LLMs to detect regressions before customer impact, and automatically executes canary rollbacks with instant incident postmortems.',
     rating: 96,
     votes: 84,
-    verdict: 'Unicorn potential 🦄',
+    verdict: 'Unicorn Potential 🦄',
+    category: 'AI Infrastructure',
+    stage: 'Seed Stage',
+    tam: '$24B TAM',
+    founderSignal: 'Stanford AI / Ex-AWS Lead',
+    thesis: 'Exceptional net revenue retention potential; automated canary rollback creates sticky enterprise moat.',
     metrics: { market: 98, innovation: 95, feasibility: 92 },
     createdAt: Date.now() - 1000 * 60 * 60 * 24 * 3,
   },
@@ -70,7 +85,12 @@ export const SAMPLE_IDEAS: Idea[] = [
       'Replaces disjointed CRM tools with goal-oriented agentic teams that research prospects, craft personalized outreach, schedule live demos, and draft customer agreements without manual intervention.',
     rating: 91,
     votes: 62,
-    verdict: 'Shark Tank ready 🦈',
+    verdict: 'Series A Ready 🦈',
+    category: 'B2B SaaS',
+    stage: 'Series A Ready',
+    tam: '$52B TAM',
+    founderSignal: '2x YC Alumni / Ex-Salesforce',
+    thesis: 'High velocity ACV expansion; displaces 4 legacy SDR software seats with automated multi-agent workflows.',
     metrics: { market: 94, innovation: 90, feasibility: 88 },
     createdAt: Date.now() - 1000 * 60 * 60 * 24 * 2,
   },
@@ -83,6 +103,11 @@ export const SAMPLE_IDEAS: Idea[] = [
     rating: 87,
     votes: 49,
     verdict: 'Growth Machine 🚀',
+    category: 'NeuroTech',
+    stage: 'Seed Stage',
+    tam: '$14B TAM',
+    founderSignal: 'MIT Media Lab / Harvard Neuro',
+    thesis: 'Proprietary EEG adaptive latency audio protocol with strong developer cohort retention and high NPS.',
     metrics: { market: 85, innovation: 94, feasibility: 82 },
     createdAt: Date.now() - 1000 * 60 * 60 * 24 * 1,
   },
@@ -95,6 +120,11 @@ export const SAMPLE_IDEAS: Idea[] = [
     rating: 81,
     votes: 38,
     verdict: 'Defensible Moat 💡',
+    category: 'ClimateTech',
+    stage: 'Pre-Seed',
+    tam: '$36B TAM',
+    founderSignal: 'UC Berkeley Energy / Siemens IoT',
+    thesis: 'Direct regulatory tailwinds from EU CSRD mandates; cryptographically verified emission proofs eliminate greenwashing penalties.',
     metrics: { market: 88, innovation: 84, feasibility: 76 },
     createdAt: Date.now() - 1000 * 60 * 60 * 12,
   },
@@ -106,12 +136,16 @@ export const SAMPLE_IDEAS: Idea[] = [
       'Ingests continuous glucose data, lipid panels, and sleep analytics to construct a real-time digital twin of the patient, predicting insulin responses and nutrient deficiencies 4 hours before meals.',
     rating: 74,
     votes: 27,
-    verdict: 'Needs more coffee ☕',
+    verdict: 'Early Validation 🔬',
+    category: 'BioTech',
+    stage: 'Pre-Seed',
+    tam: '$18B TAM',
+    founderSignal: 'Johns Hopkins / Caltech BioE',
+    thesis: 'Strong algorithmic metabolic predictive accuracy; sensor integration unit economics require further optimization.',
     metrics: { market: 78, innovation: 82, feasibility: 68 },
     createdAt: Date.now() - 1000 * 60 * 60 * 4,
   },
 ];
-
 
 export const useIdeaStore = create<IdeaStore>()(
   persist(
@@ -132,23 +166,35 @@ export const useIdeaStore = create<IdeaStore>()(
         set({ isDarkMode: val });
       },
 
-      addIdea: ({ name, tagline, description, rating, verdict, metrics }) => {
+      addIdea: ({
+        name,
+        tagline,
+        description,
+        rating,
+        verdict,
+        metrics,
+        category,
+        stage,
+        tam,
+        founderSignal,
+        thesis,
+      }) => {
         const defaultVerdict =
           verdict ||
           (rating >= 90
-            ? 'Unicorn potential 🦄'
+            ? 'Unicorn Potential 🦄'
             : rating >= 80
-            ? 'Shark Tank ready 🦈'
+            ? 'Series A Ready 🦈'
             : rating >= 70
             ? 'Growth Machine 🚀'
             : rating >= 60
             ? 'Defensible Moat 💡'
-            : 'Needs more coffee ☕');
+            : 'Early Validation 🔬');
 
         const defaultMetrics = metrics || {
-          market: Math.min(100, Math.max(40, rating + Math.floor(Math.random() * 8) - 4)),
-          innovation: Math.min(100, Math.max(40, rating + Math.floor(Math.random() * 10) - 5)),
-          feasibility: Math.min(100, Math.max(40, rating + Math.floor(Math.random() * 6) - 3)),
+          market: Math.min(100, Math.max(45, rating + Math.floor(Math.random() * 8) - 4)),
+          innovation: Math.min(100, Math.max(45, rating + Math.floor(Math.random() * 10) - 5)),
+          feasibility: Math.min(100, Math.max(45, rating + Math.floor(Math.random() * 6) - 3)),
         };
 
         const newIdea: Idea = {
@@ -160,6 +206,11 @@ export const useIdeaStore = create<IdeaStore>()(
           votes: 0,
           verdict: defaultVerdict,
           metrics: defaultMetrics,
+          category: category || 'B2B SaaS',
+          stage: stage || 'Seed Stage',
+          tam: tam || '$20B TAM',
+          founderSignal: founderSignal || 'Venture Backed Founder',
+          thesis: thesis || 'Strong market timing with clear technological differentiation.',
           createdAt: Date.now(),
         };
 
@@ -199,7 +250,7 @@ export const useIdeaStore = create<IdeaStore>()(
       },
     }),
     {
-      name: 'ideaforge-storage-v3',
+      name: 'ideaforge-storage-v4',
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (state) => ({
         ideas: state.ideas,
@@ -217,12 +268,17 @@ export const useIdeaStore = create<IdeaStore>()(
             ? persistedState.ideas.map((item: any, idx: number) => ({
                 ...SAMPLE_IDEAS[idx % SAMPLE_IDEAS.length],
                 ...item,
+                category: item.category || SAMPLE_IDEAS[idx % SAMPLE_IDEAS.length].category,
+                stage: item.stage || SAMPLE_IDEAS[idx % SAMPLE_IDEAS.length].stage,
+                tam: item.tam || SAMPLE_IDEAS[idx % SAMPLE_IDEAS.length].tam,
+                founderSignal: item.founderSignal || SAMPLE_IDEAS[idx % SAMPLE_IDEAS.length].founderSignal,
+                thesis: item.thesis || SAMPLE_IDEAS[idx % SAMPLE_IDEAS.length].thesis,
                 verdict:
                   item.verdict ||
                   (item.rating >= 90
-                    ? 'Unicorn potential 🦄'
+                    ? 'Unicorn Potential 🦄'
                     : item.rating >= 80
-                    ? 'Shark Tank ready 🦈'
+                    ? 'Series A Ready 🦈'
                     : item.rating >= 70
                     ? 'Growth Machine 🚀'
                     : 'Defensible Moat 💡'),

@@ -51,7 +51,7 @@ export default function LeaderboardScreen() {
   useEffect(() => {
     floatY.value = withRepeat(
       withSequence(
-        withTiming(-7, { duration: 1800, easing: Easing.inOut(Easing.ease) }),
+        withTiming(-6, { duration: 1800, easing: Easing.inOut(Easing.ease) }),
         withTiming(0, { duration: 1800, easing: Easing.inOut(Easing.ease) })
       ),
       -1,
@@ -96,23 +96,23 @@ export default function LeaderboardScreen() {
   const handleUpvote = (id: string, name: string) => {
     if (votedIds.includes(id)) {
       warning();
-      showToast('You already upvoted this startup!', 'info');
+      showToast('You have already committed backing for this deal.', 'info');
       return;
     }
     tap('medium');
     const success = upvoteIdea(id);
     if (success) {
       successHaptic();
-      showToast(`+1 Vote added to ${name}!`, 'success');
+      showToast(`+1 Syndicate vote logged for ${name}!`, 'success');
     }
   };
 
   const handleShare = async (idea: Idea, rank: number) => {
     tap('light');
-    const content = `🏆 #${rank} on IdeaForge: ${idea.name} – ${idea.tagline} (Score: ${idea.rating}/100, ${idea.votes} votes)`;
+    const content = `🏆 #${rank} on IdeaForge Syndicate: ${idea.name} (${idea.category || 'Tech'}) – ${idea.tagline} (AI Deal Score: ${idea.rating}/100, ${idea.votes} Backers, ${idea.tam || 'Global TAM'})`;
     const copied = await copyToClipboard(content);
     if (copied) {
-      showToast('Leaderboard rank copied to clipboard!', 'success');
+      showToast('Deal memo summary copied to clipboard!', 'success');
     }
   };
 
@@ -125,6 +125,15 @@ export default function LeaderboardScreen() {
 
   const handleSegmentLayout = (e: LayoutChangeEvent) => {
     setSegmentWidth(e.nativeEvent.layout.width);
+  };
+
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((w) => w[0].toUpperCase())
+      .join('');
   };
 
   return (
@@ -145,14 +154,20 @@ export default function LeaderboardScreen() {
               <View style={styles.trophyIconRow}>
                 <LinearGradient
                   colors={theme.gradients.gold}
-                  style={[styles.trophyBadge, theme.shadow.glow]}
+                  style={[styles.trophyBadge, theme.shadow.soft]}
                 >
                   <Feather name="award" size={24} color="#FFFFFF" />
                 </LinearGradient>
                 <View style={styles.titleTextCol}>
-                  <Text style={[styles.title, { color: theme.text }]}>Top 5 Hall of Fame</Text>
+                  <View style={styles.titleBadgeRow}>
+                    <Text style={[styles.title, { color: theme.text }]}>Syndicate Leaderboard</Text>
+                    <View style={[styles.liveTag, { backgroundColor: theme.cardSecondary, borderColor: theme.cardBorder }]}>
+                      <View style={[styles.liveDot, { backgroundColor: theme.success }]} />
+                      <Text style={[styles.liveTagText, { color: theme.success }]}>Q4 TOP DEALS</Text>
+                    </View>
+                  </View>
                   <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
-                    Leading startups ranked by community traction & AI score
+                    Top venture deals ranked by institutional backing and partner evaluation scores
                   </Text>
                 </View>
               </View>
@@ -162,7 +177,7 @@ export default function LeaderboardScreen() {
                 onLayout={handleSegmentLayout}
                 style={[
                   styles.toggleContainer,
-                  isDesktop && { minWidth: 280 },
+                  isDesktop && { minWidth: 320 },
                   {
                     backgroundColor: theme.cardSecondary,
                     borderColor: theme.cardBorder,
@@ -187,7 +202,7 @@ export default function LeaderboardScreen() {
                   onPress={() => handleToggleSort('votes')}
                   style={styles.toggleButton}
                   accessibilityRole="button"
-                  accessibilityLabel="Rank by Most Votes"
+                  accessibilityLabel="Rank by Syndicate Backers"
                 >
                   <Feather
                     name="activity"
@@ -203,7 +218,7 @@ export default function LeaderboardScreen() {
                       },
                     ]}
                   >
-                    By Most Votes
+                    By Backers
                   </Text>
                 </Pressable>
 
@@ -211,7 +226,7 @@ export default function LeaderboardScreen() {
                   onPress={() => handleToggleSort('rating')}
                   style={styles.toggleButton}
                   accessibilityRole="button"
-                  accessibilityLabel="Rank by AI Score"
+                  accessibilityLabel="Rank by Partner Deal Score"
                 >
                   <Feather
                     name="star"
@@ -227,7 +242,7 @@ export default function LeaderboardScreen() {
                       },
                     ]}
                   >
-                    By AI Score
+                    By Partner Score
                   </Text>
                 </Pressable>
               </View>
@@ -242,7 +257,7 @@ export default function LeaderboardScreen() {
                   backgroundColor: theme.card,
                   borderColor: theme.cardBorder,
                 },
-                theme.shadow.soft,
+                theme.shadow.card,
               ]}
             >
               {/* Animated Shine Sweep on top of Podium */}
@@ -255,40 +270,69 @@ export default function LeaderboardScreen() {
                 {secondPlace && (
                   <View style={styles.podiumPillarCol}>
                     <View style={styles.podiumAvatar}>
-                      <Text style={styles.podiumEmoji}>🥈</Text>
-                      <RatingRing rating={secondPlace.rating} size={isDesktop ? 56 : 48} showLabel={false} />
+                      {/* Initials Avatar */}
+                      <LinearGradient
+                        colors={theme.gradients.silver}
+                        style={[styles.podiumAvatarCircle, { borderColor: theme.cardBorder }]}
+                      >
+                        <Text style={styles.podiumAvatarInitials}>
+                          {getInitials(secondPlace.name)}
+                        </Text>
+                      </LinearGradient>
+                      <View style={[styles.metallicBadge, { backgroundColor: '#64748B' }]}>
+                        <Text style={styles.metallicBadgeText}>#2 SILVER</Text>
+                      </View>
                     </View>
+
                     <Text style={[styles.podiumName, { color: theme.text }]} numberOfLines={1}>
                       {secondPlace.name}
                     </Text>
-                    <Text style={[styles.podiumVotes, { color: theme.silver }]}>
+
+                    {/* Sector & TAM Pills */}
+                    <View style={styles.podiumTagsRow}>
+                      <View style={[styles.microTag, { backgroundColor: theme.cardSecondary, borderColor: theme.cardBorder }]}>
+                        <Text style={[styles.microTagText, { color: theme.textSecondary }]}>
+                          {secondPlace.category || 'Tech'}
+                        </Text>
+                      </View>
+                    </View>
+
+                    <Text style={[styles.podiumVotes, { color: theme.textSecondary }]}>
                       {sortMode === 'votes'
-                        ? `${secondPlace.votes} votes`
-                        : `${secondPlace.rating} score`}
+                        ? `${secondPlace.votes} Backers`
+                        : `${secondPlace.rating}/100 Score`}
                     </Text>
+
                     <LinearGradient
                       colors={theme.gradients.silver}
                       style={[styles.pillar, isDesktop ? styles.pillarSilverDesktop : styles.pillarSilver]}
                     >
-                      <Text style={styles.pillarRankNumber}>#2</Text>
+                      <View style={styles.pillarHeader}>
+                        <Text style={styles.pillarRankNumber}>#2</Text>
+                        <RatingRing rating={secondPlace.rating} size={38} showLabel={false} />
+                      </View>
+
                       <Pressable
                         onPress={() => handleUpvote(secondPlace.id, secondPlace.name)}
                         accessibilityRole="button"
-                        accessibilityLabel={`Upvote ${secondPlace.name}`}
+                        accessibilityLabel={`Back ${secondPlace.name}`}
                         style={[
-                          styles.podiumVoteBtn,
+                          styles.podiumBackBtn,
                           {
                             backgroundColor: votedIds.includes(secondPlace.id)
                               ? theme.success
-                              : 'rgba(0,0,0,0.3)',
+                              : 'rgba(15, 23, 42, 0.75)',
                           },
                         ]}
                       >
                         <Feather
                           name={votedIds.includes(secondPlace.id) ? 'check' : 'arrow-up'}
-                          size={14}
+                          size={13}
                           color="#FFFFFF"
                         />
+                        <Text style={styles.podiumBackBtnText}>
+                          {votedIds.includes(secondPlace.id) ? 'Backed' : 'Back Deal'}
+                        </Text>
                       </Pressable>
                     </LinearGradient>
                   </View>
@@ -298,40 +342,77 @@ export default function LeaderboardScreen() {
                 {firstPlace && (
                   <Animated.View style={[styles.podiumPillarCol, styles.centerPillarCol, animatedFloatStyle]}>
                     <View style={styles.podiumAvatar}>
-                      <Text style={styles.podiumEmojiGold}>🥇</Text>
-                      <RatingRing rating={firstPlace.rating} size={isDesktop ? 68 : 58} showLabel={false} />
+                      {/* Initials Avatar Gold */}
+                      <LinearGradient
+                        colors={theme.gradients.gold}
+                        style={[styles.podiumAvatarCircleGold, theme.shadow.soft]}
+                      >
+                        <Text style={styles.podiumAvatarInitialsGold}>
+                          {getInitials(firstPlace.name)}
+                        </Text>
+                      </LinearGradient>
+                      <View style={[styles.metallicBadgeGold, { backgroundColor: '#D97706' }]}>
+                        <Feather name="zap" size={10} color="#FFFFFF" style={{ marginRight: 3 }} />
+                        <Text style={styles.metallicBadgeTextGold}>#1 SYNDICATE LEAD</Text>
+                      </View>
                     </View>
+
                     <Text style={[styles.podiumNameGold, { color: theme.text }]} numberOfLines={1}>
                       {firstPlace.name}
                     </Text>
-                    <Text style={[styles.podiumVotes, { color: theme.gold }]}>
+
+                    {/* Sector & TAM Pills */}
+                    <View style={styles.podiumTagsRow}>
+                      <View style={[styles.microTag, { backgroundColor: theme.cardSecondary, borderColor: theme.cardBorder }]}>
+                        <Text style={[styles.microTagText, { color: theme.primary, fontFamily: 'Inter_700Bold' }]}>
+                          {firstPlace.category || 'Tech'}
+                        </Text>
+                      </View>
+                      {Boolean(firstPlace.tam) && (
+                        <View style={[styles.microTag, { backgroundColor: theme.cardSecondary, borderColor: theme.cardBorder }]}>
+                          <Text style={[styles.microTagText, { color: theme.accent }]}>
+                            {firstPlace.tam}
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+
+                    <Text style={[styles.podiumVotesGold, { color: theme.gold }]}>
                       {sortMode === 'votes'
-                        ? `${firstPlace.votes} votes`
-                        : `${firstPlace.rating} score`}
+                        ? `${firstPlace.votes} Syndicate Backers`
+                        : `${firstPlace.rating}/100 Partner Score`}
                     </Text>
+
                     <LinearGradient
                       colors={theme.gradients.gold}
                       style={[styles.pillar, isDesktop ? styles.pillarGoldDesktop : styles.pillarGold]}
                     >
-                      <Text style={styles.pillarRankNumberGold}>#1</Text>
+                      <View style={styles.pillarHeader}>
+                        <Text style={styles.pillarRankNumberGold}>#1</Text>
+                        <RatingRing rating={firstPlace.rating} size={44} showLabel={false} />
+                      </View>
+
                       <Pressable
                         onPress={() => handleUpvote(firstPlace.id, firstPlace.name)}
                         accessibilityRole="button"
-                        accessibilityLabel={`Upvote ${firstPlace.name}`}
+                        accessibilityLabel={`Back ${firstPlace.name}`}
                         style={[
-                          styles.podiumVoteBtn,
+                          styles.podiumBackBtnGold,
                           {
                             backgroundColor: votedIds.includes(firstPlace.id)
                               ? theme.success
-                              : 'rgba(0,0,0,0.3)',
+                              : 'rgba(15, 23, 42, 0.85)',
                           },
                         ]}
                       >
                         <Feather
                           name={votedIds.includes(firstPlace.id) ? 'check' : 'arrow-up'}
-                          size={15}
+                          size={14}
                           color="#FFFFFF"
                         />
+                        <Text style={styles.podiumBackBtnTextGold}>
+                          {votedIds.includes(firstPlace.id) ? 'Backed' : 'Back Deal'}
+                        </Text>
                       </Pressable>
                     </LinearGradient>
                   </Animated.View>
@@ -341,40 +422,69 @@ export default function LeaderboardScreen() {
                 {thirdPlace && (
                   <View style={styles.podiumPillarCol}>
                     <View style={styles.podiumAvatar}>
-                      <Text style={styles.podiumEmoji}>🥉</Text>
-                      <RatingRing rating={thirdPlace.rating} size={isDesktop ? 54 : 46} showLabel={false} />
+                      {/* Initials Avatar Bronze */}
+                      <LinearGradient
+                        colors={theme.gradients.bronze}
+                        style={[styles.podiumAvatarCircle, { borderColor: theme.cardBorder }]}
+                      >
+                        <Text style={styles.podiumAvatarInitials}>
+                          {getInitials(thirdPlace.name)}
+                        </Text>
+                      </LinearGradient>
+                      <View style={[styles.metallicBadge, { backgroundColor: '#B45309' }]}>
+                        <Text style={styles.metallicBadgeText}>#3 BRONZE</Text>
+                      </View>
                     </View>
+
                     <Text style={[styles.podiumName, { color: theme.text }]} numberOfLines={1}>
                       {thirdPlace.name}
                     </Text>
-                    <Text style={[styles.podiumVotes, { color: theme.bronze }]}>
+
+                    {/* Sector & TAM Pills */}
+                    <View style={styles.podiumTagsRow}>
+                      <View style={[styles.microTag, { backgroundColor: theme.cardSecondary, borderColor: theme.cardBorder }]}>
+                        <Text style={[styles.microTagText, { color: theme.textSecondary }]}>
+                          {thirdPlace.category || 'Tech'}
+                        </Text>
+                      </View>
+                    </View>
+
+                    <Text style={[styles.podiumVotes, { color: theme.textSecondary }]}>
                       {sortMode === 'votes'
-                        ? `${thirdPlace.votes} votes`
-                        : `${thirdPlace.rating} score`}
+                        ? `${thirdPlace.votes} Backers`
+                        : `${thirdPlace.rating}/100 Score`}
                     </Text>
+
                     <LinearGradient
                       colors={theme.gradients.bronze}
                       style={[styles.pillar, isDesktop ? styles.pillarBronzeDesktop : styles.pillarBronze]}
                     >
-                      <Text style={styles.pillarRankNumber}>#3</Text>
+                      <View style={styles.pillarHeader}>
+                        <Text style={styles.pillarRankNumber}>#3</Text>
+                        <RatingRing rating={thirdPlace.rating} size={36} showLabel={false} />
+                      </View>
+
                       <Pressable
                         onPress={() => handleUpvote(thirdPlace.id, thirdPlace.name)}
                         accessibilityRole="button"
-                        accessibilityLabel={`Upvote ${thirdPlace.name}`}
+                        accessibilityLabel={`Back ${thirdPlace.name}`}
                         style={[
-                          styles.podiumVoteBtn,
+                          styles.podiumBackBtn,
                           {
                             backgroundColor: votedIds.includes(thirdPlace.id)
                               ? theme.success
-                              : 'rgba(0,0,0,0.3)',
+                              : 'rgba(15, 23, 42, 0.75)',
                           },
                         ]}
                       >
                         <Feather
                           name={votedIds.includes(thirdPlace.id) ? 'check' : 'arrow-up'}
-                          size={14}
+                          size={13}
                           color="#FFFFFF"
                         />
+                        <Text style={styles.podiumBackBtnText}>
+                          {votedIds.includes(thirdPlace.id) ? 'Backed' : 'Back Deal'}
+                        </Text>
                       </Pressable>
                     </LinearGradient>
                   </View>
@@ -385,9 +495,14 @@ export default function LeaderboardScreen() {
             {/* Cards 4 and 5 Below the Podium */}
             {runnersUp.length > 0 && (
               <View style={styles.runnersUpSection}>
-                <Text style={[styles.runnersUpSectionTitle, { color: theme.text }]}>
-                  Contenders & Rising Startups
-                </Text>
+                <View style={styles.contendersHeaderRow}>
+                  <Text style={[styles.runnersUpSectionTitle, { color: theme.text }]}>
+                    Syndicate Contenders & Rising Deals
+                  </Text>
+                  <Text style={[styles.contendersCount, { color: theme.muted }]}>
+                    Positions #4 – #5
+                  </Text>
+                </View>
 
                 <View style={isWide ? styles.desktopContendersRow : undefined}>
                   {runnersUp.map((item, index) => {
@@ -405,10 +520,11 @@ export default function LeaderboardScreen() {
                             backgroundColor: theme.card,
                             borderColor: theme.cardBorder,
                           },
-                          theme.shadow.soft,
+                          theme.shadow.card,
                         ]}
                       >
                         <View style={styles.runnerLeft}>
+                          {/* Rank Circle */}
                           <View
                             style={[
                               styles.runnerRankBadge,
@@ -418,14 +534,50 @@ export default function LeaderboardScreen() {
                               },
                             ]}
                           >
-                            <Text style={[styles.runnerRankText, { color: theme.muted }]}>
+                            <Text style={[styles.runnerRankText, { color: theme.textSecondary }]}>
                               #{rank}
                             </Text>
                           </View>
-                          <View style={styles.runnerDetails}>
-                            <Text style={[styles.runnerName, { color: theme.text }]} numberOfLines={1}>
-                              {item.name}
+
+                          {/* Initials Avatar */}
+                          <LinearGradient
+                            colors={theme.gradients.surface}
+                            style={[styles.runnerAvatar, { borderColor: theme.cardBorder }]}
+                          >
+                            <Text style={[styles.runnerAvatarText, { color: theme.primary }]}>
+                              {getInitials(item.name)}
                             </Text>
+                          </LinearGradient>
+
+                          <View style={styles.runnerDetails}>
+                            <View style={styles.runnerNameRow}>
+                              <Text style={[styles.runnerName, { color: theme.text }]} numberOfLines={1}>
+                                {item.name}
+                              </Text>
+                              {Boolean(item.stage) && (
+                                <View style={[styles.runnerStageBadge, { backgroundColor: theme.cardSecondary, borderColor: theme.cardBorder }]}>
+                                  <Text style={[styles.runnerStageText, { color: theme.muted }]}>
+                                    {item.stage}
+                                  </Text>
+                                </View>
+                              )}
+                            </View>
+
+                            {/* Category & TAM */}
+                            <View style={styles.runnerMetaRow}>
+                              <Text style={[styles.runnerCategory, { color: theme.textSecondary }]}>
+                                {item.category || 'Tech'}
+                              </Text>
+                              {Boolean(item.tam) && (
+                                <>
+                                  <Text style={[styles.dotSep, { color: theme.muted }]}>•</Text>
+                                  <Text style={[styles.runnerTam, { color: theme.accent }]}>
+                                    {item.tam}
+                                  </Text>
+                                </>
+                              )}
+                            </View>
+
                             <Text style={[styles.runnerTagline, { color: theme.textSecondary }]} numberOfLines={1}>
                               {item.tagline}
                             </Text>
@@ -433,12 +585,12 @@ export default function LeaderboardScreen() {
                         </View>
 
                         <View style={styles.runnerRight}>
-                          <RatingRing rating={item.rating} size={46} showLabel={false} />
+                          <RatingRing rating={item.rating} size={44} showLabel={false} />
 
                           <Pressable
                             onPress={() => handleShare(item, rank)}
                             accessibilityRole="button"
-                            accessibilityLabel="Share rank"
+                            accessibilityLabel="Share memo"
                             style={({ pressed }) => [
                               styles.runnerActionBtn,
                               {
@@ -455,7 +607,7 @@ export default function LeaderboardScreen() {
                           <Pressable
                             onPress={() => handleUpvote(item.id, item.name)}
                             accessibilityRole="button"
-                            accessibilityLabel={`Upvote ${item.name}`}
+                            accessibilityLabel={`Back ${item.name}`}
                             style={({ pressed }) => [
                               styles.runnerUpvoteBtn,
                               {
@@ -470,7 +622,7 @@ export default function LeaderboardScreen() {
                               color="#FFFFFF"
                             />
                             <Text style={styles.runnerUpvoteText}>
-                              {sortMode === 'votes' ? item.votes : item.rating}
+                              {sortMode === 'votes' ? `${item.votes} Backers` : `${item.rating} Score`}
                             </Text>
                           </Pressable>
                         </View>
@@ -480,6 +632,22 @@ export default function LeaderboardScreen() {
                 </View>
               </View>
             )}
+
+            {/* Institutional Syndicate Banner */}
+            <View
+              style={[
+                styles.syndicateNoticeBanner,
+                {
+                  backgroundColor: theme.cardSecondary,
+                  borderColor: theme.cardBorder,
+                },
+              ]}
+            >
+              <Feather name="shield" size={16} color={theme.primary} />
+              <Text style={[styles.syndicateNoticeText, { color: theme.textSecondary }]}>
+                Rankings represent live syndicate interest and weighted partner memos across Market TAM, Moat, and Execution Velocity.
+              </Text>
+            </View>
           </Animated.View>
         </View>
       </ScrollView>
@@ -501,8 +669,8 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   headerTitleSection: {
-    marginBottom: 18,
-    gap: 12,
+    marginBottom: 20,
+    gap: 14,
   },
   desktopHeaderTitleSection: {
     flexDirection: 'row',
@@ -512,27 +680,52 @@ const styles = StyleSheet.create({
   trophyIconRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 14,
   },
   trophyBadge: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
     justifyContent: 'center',
     alignItems: 'center',
   },
   titleTextCol: {
     justifyContent: 'center',
+    gap: 2,
+  },
+  titleBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    flexWrap: 'wrap',
   },
   title: {
-    fontSize: 24,
+    fontSize: 22,
     fontFamily: 'Inter_800ExtraBold',
     letterSpacing: -0.4,
   },
+  liveTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  liveDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  liveTagText: {
+    fontSize: 10,
+    fontFamily: 'Inter_700Bold',
+    letterSpacing: 0.5,
+  },
   subtitle: {
     fontSize: 13,
-    fontFamily: 'Inter_600SemiBold',
-    marginTop: 2,
+    fontFamily: 'Inter_500Medium',
   },
   toggleContainer: {
     flexDirection: 'row',
@@ -572,17 +765,17 @@ const styles = StyleSheet.create({
   podiumContainer: {
     borderRadius: 24,
     borderWidth: 1.2,
-    paddingTop: 20,
-    paddingBottom: 14,
-    paddingHorizontal: 10,
+    paddingTop: 24,
+    paddingBottom: 16,
+    paddingHorizontal: 12,
     overflow: 'hidden',
     position: 'relative',
     marginBottom: 24,
   },
   desktopPodiumContainer: {
-    paddingTop: 28,
-    paddingBottom: 20,
-    paddingHorizontal: 28,
+    paddingTop: 32,
+    paddingBottom: 22,
+    paddingHorizontal: 30,
   },
   shineSweepWrapper: {
     position: 'absolute',
@@ -595,7 +788,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-end',
     justifyContent: 'center',
-    paddingTop: 8,
+    paddingTop: 12,
   },
   podiumPillarCol: {
     flex: 1,
@@ -604,36 +797,102 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
   },
   centerPillarCol: {
-    flex: 1.15,
+    flex: 1.2,
   },
   podiumAvatar: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 8,
+    marginBottom: 10,
   },
-  podiumEmoji: {
-    fontSize: 24,
-    marginBottom: 2,
+  podiumAvatarCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    borderWidth: 1.5,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 6,
   },
-  podiumEmojiGold: {
-    fontSize: 32,
-    marginBottom: 2,
+  podiumAvatarInitials: {
+    fontSize: 16,
+    fontFamily: 'Inter_800ExtraBold',
+    color: '#FFFFFF',
+  },
+  podiumAvatarCircleGold: {
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    borderWidth: 2,
+    borderColor: '#F59E0B',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  podiumAvatarInitialsGold: {
+    fontSize: 20,
+    fontFamily: 'Inter_800ExtraBold',
+    color: '#FFFFFF',
+  },
+  metallicBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 10,
+  },
+  metallicBadgeText: {
+    fontSize: 9,
+    fontFamily: 'Inter_700Bold',
+    color: '#FFFFFF',
+    letterSpacing: 0.5,
+  },
+  metallicBadgeGold: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 9,
+    paddingVertical: 3,
+    borderRadius: 10,
+  },
+  metallicBadgeTextGold: {
+    fontSize: 9,
+    fontFamily: 'Inter_800ExtraBold',
+    color: '#FFFFFF',
+    letterSpacing: 0.5,
   },
   podiumName: {
     fontSize: 13,
     fontFamily: 'Inter_700Bold',
     textAlign: 'center',
-    marginBottom: 2,
+    marginBottom: 3,
   },
   podiumNameGold: {
     fontSize: 16,
     fontFamily: 'Inter_800ExtraBold',
     textAlign: 'center',
-    marginBottom: 2,
+    marginBottom: 3,
+  },
+  podiumTagsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginBottom: 6,
+  },
+  microTag: {
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  microTagText: {
+    fontSize: 10,
+    fontFamily: 'Inter_600SemiBold',
   },
   podiumVotes: {
     fontSize: 12,
     fontFamily: 'Inter_600SemiBold',
+    marginBottom: 8,
+  },
+  podiumVotesGold: {
+    fontSize: 13,
+    fontFamily: 'Inter_700Bold',
     marginBottom: 8,
   },
   pillar: {
@@ -644,24 +903,32 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingTop: 12,
     paddingBottom: 10,
+    paddingHorizontal: 8,
+  },
+  pillarHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+    paddingHorizontal: 6,
   },
   pillarGold: {
-    height: 135,
+    height: 145,
   },
   pillarGoldDesktop: {
-    height: 170,
+    height: 180,
   },
   pillarSilver: {
-    height: 105,
+    height: 115,
   },
   pillarSilverDesktop: {
-    height: 130,
+    height: 140,
   },
   pillarBronze: {
-    height: 85,
+    height: 95,
   },
   pillarBronzeDesktop: {
-    height: 105,
+    height: 115,
   },
   pillarRankNumber: {
     fontSize: 20,
@@ -677,22 +944,54 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(0,0,0,0.4)',
     textShadowRadius: 6,
   },
-  podiumVoteBtn: {
+  podiumBackBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    width: 32,
-    height: 32,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 14,
+    gap: 4,
+    width: '100%',
+  },
+  podiumBackBtnText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontFamily: 'Inter_700Bold',
+  },
+  podiumBackBtnGold: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
     borderRadius: 16,
+    gap: 5,
+    width: '100%',
+  },
+  podiumBackBtnTextGold: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontFamily: 'Inter_800ExtraBold',
   },
   runnersUpSection: {
-    marginTop: 4,
+    marginTop: 6,
+    marginBottom: 20,
+  },
+  contendersHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 14,
   },
   runnersUpSectionTitle: {
-    fontSize: 18,
+    fontSize: 17,
     fontFamily: 'Inter_700Bold',
     letterSpacing: -0.2,
-    marginBottom: 14,
+  },
+  contendersCount: {
+    fontSize: 12,
+    fontFamily: 'Inter_600SemiBold',
   },
   desktopContendersRow: {
     flexDirection: 'row',
@@ -718,25 +1017,70 @@ const styles = StyleSheet.create({
     paddingRight: 10,
   },
   runnerRankBadge: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  runnerRankText: {
+    fontSize: 12,
+    fontFamily: 'Inter_700Bold',
+  },
+  runnerAvatar: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     borderWidth: 1,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
   },
-  runnerRankText: {
+  runnerAvatarText: {
     fontSize: 13,
-    fontFamily: 'Inter_700Bold',
+    fontFamily: 'Inter_800ExtraBold',
   },
   runnerDetails: {
     flex: 1,
   },
-  runnerName: {
-    fontSize: 16,
-    fontFamily: 'Inter_700Bold',
+  runnerNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
     marginBottom: 2,
+  },
+  runnerName: {
+    fontSize: 15,
+    fontFamily: 'Inter_700Bold',
+  },
+  runnerStageBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: 6,
+    borderWidth: 1,
+  },
+  runnerStageText: {
+    fontSize: 10,
+    fontFamily: 'Inter_600SemiBold',
+  },
+  runnerMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 3,
+  },
+  runnerCategory: {
+    fontSize: 11,
+    fontFamily: 'Inter_600SemiBold',
+  },
+  dotSep: {
+    marginHorizontal: 5,
+    fontSize: 11,
+  },
+  runnerTam: {
+    fontSize: 11,
+    fontFamily: 'Inter_600SemiBold',
   },
   runnerTagline: {
     fontSize: 12,
@@ -759,14 +1103,29 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 9,
-    paddingHorizontal: 14,
-    borderRadius: 18,
+    paddingHorizontal: 12,
+    borderRadius: 16,
     gap: 5,
     minHeight: 38,
   },
   runnerUpvoteText: {
     color: '#FFFFFF',
-    fontSize: 13,
+    fontSize: 12,
     fontFamily: 'Inter_700Bold',
+  },
+  syndicateNoticeBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 14,
+    borderRadius: 16,
+    borderWidth: 1,
+    marginBottom: 20,
+  },
+  syndicateNoticeText: {
+    fontSize: 12,
+    fontFamily: 'Inter_500Medium',
+    flex: 1,
+    lineHeight: 18,
   },
 });

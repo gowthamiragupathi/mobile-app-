@@ -31,9 +31,9 @@ export const FloatingTabBar: React.FC<BottomTabBarProps> = ({
       label: string;
     }
   > = {
-    index: { icon: 'compass', label: 'Ideas' },
-    submit: { icon: 'plus-circle', label: 'Submit' },
-    leaderboard: { icon: 'award', label: 'Top 5' },
+    index: { icon: 'grid', label: 'Ventures' },
+    submit: { icon: 'plus-circle', label: 'Audit Deal' },
+    leaderboard: { icon: 'award', label: 'Syndicate' },
   };
 
   const handleContainerLayout = (e: LayoutChangeEvent) => {

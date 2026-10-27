@@ -86,26 +86,24 @@ export const Header: React.FC = () => {
             colors={theme.gradients.primary}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
-            style={[styles.logoBadge, theme.shadow.glow]}
+            style={[styles.logoBadge, theme.shadow.soft]}
           >
-            <Feather name="zap" size={20} color="#FFFFFF" />
+            <Feather name="layers" size={18} color="#FFFFFF" />
           </LinearGradient>
           <View style={styles.titleCol}>
             <View style={styles.logoTitleRow}>
               <Text style={[styles.title, { color: theme.text }]}>IdeaForge</Text>
-              {isDesktop && (
-                <View
-                  style={[
-                    styles.webBadge,
-                    { backgroundColor: theme.cardSecondary, borderColor: theme.cardBorder },
-                  ]}
-                >
-                  <Text style={[styles.webBadgeText, { color: theme.primary }]}>AI EVALUATOR</Text>
-                </View>
-              )}
+              <View
+                style={[
+                  styles.webBadge,
+                  { backgroundColor: theme.cardSecondary, borderColor: theme.cardBorder },
+                ]}
+              >
+                <Text style={[styles.webBadgeText, { color: theme.primary }]}>PRO VENTURE</Text>
+              </View>
             </View>
-            <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
-              Startup Idea Evaluator
+            <Text style={[styles.subtitle, { color: theme.muted }]}>
+              AI Deal Intelligence & Evaluation Platform
             </Text>
           </View>
         </Pressable>
@@ -122,13 +120,13 @@ export const Header: React.FC = () => {
               onPress={() => navTo('/(tabs)')}
               style={[
                 styles.desktopNavTab,
-                isIdeasActive && { backgroundColor: theme.card, borderColor: theme.cardBorder },
+                isIdeasActive && [styles.activeTab, { backgroundColor: theme.card, borderColor: theme.cardBorder }, theme.shadow.soft],
               ]}
               accessibilityRole="link"
             >
               <Feather
-                name="compass"
-                size={15}
+                name="grid"
+                size={14}
                 color={isIdeasActive ? theme.primary : theme.muted}
               />
               <Text
@@ -140,7 +138,7 @@ export const Header: React.FC = () => {
                   },
                 ]}
               >
-                Ideas Feed
+                Ventures Directory
               </Text>
             </Pressable>
 
@@ -148,13 +146,13 @@ export const Header: React.FC = () => {
               onPress={() => navTo('/(tabs)/submit')}
               style={[
                 styles.desktopNavTab,
-                isSubmitActive && { backgroundColor: theme.card, borderColor: theme.cardBorder },
+                isSubmitActive && [styles.activeTab, { backgroundColor: theme.card, borderColor: theme.cardBorder }, theme.shadow.soft],
               ]}
               accessibilityRole="link"
             >
               <Feather
                 name="plus-circle"
-                size={15}
+                size={14}
                 color={isSubmitActive ? theme.primary : theme.muted}
               />
               <Text
@@ -166,7 +164,7 @@ export const Header: React.FC = () => {
                   },
                 ]}
               >
-                Submit Startup
+                Submit & Audit
               </Text>
             </Pressable>
 
@@ -174,13 +172,13 @@ export const Header: React.FC = () => {
               onPress={() => navTo('/(tabs)/leaderboard')}
               style={[
                 styles.desktopNavTab,
-                isLeaderboardActive && { backgroundColor: theme.card, borderColor: theme.cardBorder },
+                isLeaderboardActive && [styles.activeTab, { backgroundColor: theme.card, borderColor: theme.cardBorder }, theme.shadow.soft],
               ]}
               accessibilityRole="link"
             >
               <Feather
-                name="award"
-                size={15}
+                name="trending-up"
+                size={14}
                 color={isLeaderboardActive ? theme.primary : theme.muted}
               />
               <Text
@@ -192,14 +190,21 @@ export const Header: React.FC = () => {
                   },
                 ]}
               >
-                Leaderboard
+                Top Syndicate
               </Text>
             </Pressable>
           </View>
         )}
 
-        {/* Right Section: Quick CTA + Theme Toggle */}
+        {/* Right Section: Status Indicator + Quick CTA + Theme Toggle */}
         <View style={styles.rightRow}>
+          {isDesktop && (
+            <View style={[styles.liveSignalPill, { borderColor: theme.cardBorder, backgroundColor: theme.cardSecondary }]}>
+              <View style={[styles.liveDot, { backgroundColor: theme.success }]} />
+              <Text style={[styles.liveText, { color: theme.textSecondary }]}>Live Syndicate</Text>
+            </View>
+          )}
+
           {isDesktop && !isSubmitActive && (
             <Pressable
               onPress={() => navTo('/(tabs)/submit')}
@@ -212,8 +217,8 @@ export const Header: React.FC = () => {
                 end={{ x: 1, y: 1 }}
                 style={styles.desktopCtaGradient}
               >
-                <Feather name="plus" size={16} color="#FFFFFF" />
-                <Text style={styles.desktopCtaText}>Evaluate Startup</Text>
+                <Feather name="plus" size={15} color="#FFFFFF" />
+                <Text style={styles.desktopCtaText}>Evaluate Deal</Text>
               </LinearGradient>
             </Pressable>
           )}
@@ -226,20 +231,21 @@ export const Header: React.FC = () => {
             style={({ pressed }) => [
               styles.themeButton,
               {
-                backgroundColor: theme.cardSecondary,
+                backgroundColor: theme.card,
                 borderColor: theme.cardBorder,
                 opacity: pressed ? 0.75 : 1,
-                transform: [{ scale: pressed ? 0.92 : 1 }],
+                transform: [{ scale: pressed ? 0.94 : 1 }],
               },
+              theme.shadow.soft,
             ]}
             hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
           >
             <View style={styles.iconCenter}>
               <Animated.View style={[StyleSheet.absoluteFill, styles.iconCenter, moonAnimatedStyle]}>
-                <Feather name="sun" size={18} color={theme.gold} />
+                <Feather name="sun" size={16} color={theme.gold} />
               </Animated.View>
               <Animated.View style={[StyleSheet.absoluteFill, styles.iconCenter, sunAnimatedStyle]}>
-                <Feather name="moon" size={18} color={theme.primary} />
+                <Feather name="moon" size={16} color={theme.primary} />
               </Animated.View>
             </View>
           </Pressable>
@@ -252,8 +258,8 @@ export const Header: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 12,
+    paddingTop: 10,
+    paddingBottom: 10,
     borderBottomWidth: 1,
     zIndex: 100,
   },
@@ -262,7 +268,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     width: '100%',
-    maxWidth: 1200,
+    maxWidth: 1240,
     alignSelf: 'center',
   },
   leftRow: {
@@ -270,9 +276,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logoBadge: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
+    width: 36,
+    height: 36,
+    borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -287,83 +293,105 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: 'Inter_800ExtraBold',
-    fontSize: 20,
+    fontSize: 18,
     letterSpacing: -0.5,
   },
   webBadge: {
     paddingVertical: 2,
-    paddingHorizontal: 7,
+    paddingHorizontal: 6,
     borderRadius: 6,
     borderWidth: 1,
   },
   webBadgeText: {
     fontSize: 9,
     fontFamily: 'Inter_800ExtraBold',
-    letterSpacing: 0.5,
+    letterSpacing: 0.6,
   },
   subtitle: {
-    fontFamily: 'Inter_600SemiBold',
+    fontFamily: 'Inter_500Medium',
     fontSize: 11,
-    letterSpacing: 0.2,
+    letterSpacing: 0.1,
     marginTop: 1,
   },
   desktopNavGroup: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 4,
-    borderRadius: 16,
+    padding: 3,
+    borderRadius: 12,
     borderWidth: 1,
-    gap: 4,
+    gap: 2,
   },
   desktopNavTab: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 12,
+    paddingVertical: 7,
+    paddingHorizontal: 14,
+    borderRadius: 9,
     borderWidth: 1,
     borderColor: 'transparent',
     gap: 7,
-    minHeight: 38,
+    minHeight: 34,
+  },
+  activeTab: {
+    borderWidth: 1,
   },
   desktopNavText: {
-    fontSize: 13,
+    fontSize: 12.5,
     letterSpacing: 0.1,
   },
   rightRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 10,
+  },
+  liveSignalPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 20,
+    borderWidth: 1,
+    gap: 6,
+  },
+  liveDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  liveText: {
+    fontSize: 11,
+    fontFamily: 'Inter_600SemiBold',
+    letterSpacing: 0.2,
   },
   desktopCtaBtn: {
-    borderRadius: 14,
+    borderRadius: 10,
     overflow: 'hidden',
   },
   desktopCtaGradient: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 9,
-    paddingHorizontal: 16,
-    borderRadius: 14,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 10,
     gap: 6,
   },
   desktopCtaText: {
     color: '#FFFFFF',
-    fontSize: 13,
+    fontSize: 12.5,
     fontFamily: 'Inter_700Bold',
     letterSpacing: 0.2,
   },
   themeButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    borderWidth: 1.2,
+    width: 38,
+    height: 38,
+    borderRadius: 10,
+    borderWidth: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
   iconCenter: {
-    width: 24,
-    height: 24,
+    width: 20,
+    height: 20,
     justifyContent: 'center',
     alignItems: 'center',
   },

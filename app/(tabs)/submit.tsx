@@ -22,7 +22,6 @@ import Animated, {
   useAnimatedStyle,
   withRepeat,
   withTiming,
-  withSpring,
   withSequence,
   Easing,
 } from 'react-native-reanimated';
@@ -35,12 +34,25 @@ import { useTheme } from '../../theme/colors';
 import { tap, success as successHaptic, error as errorHaptic } from '../../utils/haptics';
 
 const FUN_AI_MESSAGES = [
-  'Scanning addressable market…',
-  'Calling imaginary VCs…',
-  'Benchmarking moat durability…',
-  'Crunching TAM calculations…',
-  'Synthesizing investor verdict…',
+  'Auditing addressable market TAM…',
+  'Simulating tier-1 VC partner reactions…',
+  'Benchmarking defensibility moat & retention…',
+  'Analyzing gross margins & unit economics…',
+  'Synthesizing investment committee memo…',
 ];
+
+const SECTORS = [
+  'AI Infrastructure',
+  'B2B SaaS',
+  'FinTech',
+  'ClimateTech',
+  'BioTech',
+  'Cybersecurity',
+];
+
+const STAGES = ['Pre-Seed', 'Seed Stage', 'Series A Ready'];
+
+const TAM_TIERS = ['$10B+ TAM', '$25B+ TAM', '$50B+ TAM'];
 
 export default function SubmitScreen() {
   const theme = useTheme();
@@ -50,6 +62,9 @@ export default function SubmitScreen() {
   const [name, setName] = useState('');
   const [tagline, setTagline] = useState('');
   const [description, setDescription] = useState('');
+  const [category, setCategory] = useState('AI Infrastructure');
+  const [stage, setStage] = useState('Seed Stage');
+  const [tam, setTam] = useState('$25B+ TAM');
 
   const [nameFocused, setNameFocused] = useState(false);
   const [taglineFocused, setTaglineFocused] = useState(false);
@@ -80,7 +95,7 @@ export default function SubmitScreen() {
       setMessageIndex(0);
       interval = setInterval(() => {
         setMessageIndex((prev) => (prev + 1) % FUN_AI_MESSAGES.length);
-      }, 360);
+      }, 340);
     }
     return () => clearInterval(interval);
   }, [isAnalysing]);
@@ -146,10 +161,10 @@ export default function SubmitScreen() {
 
   const triggerShake = () => {
     shakeX.value = withSequence(
-      withTiming(-12, { duration: 60 }),
-      withTiming(12, { duration: 60 }),
-      withTiming(-8, { duration: 60 }),
-      withTiming(8, { duration: 60 }),
+      withTiming(-10, { duration: 60 }),
+      withTiming(10, { duration: 60 }),
+      withTiming(-6, { duration: 60 }),
+      withTiming(6, { duration: 60 }),
       withTiming(0, { duration: 60 })
     );
   };
@@ -158,19 +173,19 @@ export default function SubmitScreen() {
     const newErrors: { name?: string; tagline?: string; description?: string } = {};
 
     if (!name.trim()) {
-      newErrors.name = 'Startup name is required';
+      newErrors.name = 'Startup venture name is required';
     } else if (name.trim().length < 2) {
       newErrors.name = 'Startup name must be at least 2 characters';
     }
 
     if (!tagline.trim()) {
-      newErrors.tagline = 'Tagline is required';
+      newErrors.tagline = 'Executive one-line pitch is required';
     } else if (tagline.trim().length < 6) {
-      newErrors.tagline = 'Tagline must be at least 6 characters';
+      newErrors.tagline = 'Pitch must be at least 6 characters';
     }
 
     if (!description.trim()) {
-      newErrors.description = 'Description is required';
+      newErrors.description = 'Moat & unit economics breakdown is required';
     } else if (description.trim().length < 15) {
       newErrors.description = 'Description must be at least 15 characters';
     }
@@ -180,11 +195,11 @@ export default function SubmitScreen() {
   };
 
   const getVerdictLabel = (score: number) => {
-    if (score >= 90) return 'Unicorn potential 🦄';
-    if (score >= 80) return 'Shark Tank ready 🦈';
+    if (score >= 90) return 'Unicorn Potential 🦄';
+    if (score >= 80) return 'Series A Ready 🦈';
     if (score >= 70) return 'Growth Machine 🚀';
     if (score >= 60) return 'Defensible Moat 💡';
-    return 'Needs more coffee ☕';
+    return 'Early Validation 🔬';
   };
 
   const handleSubmit = () => {
@@ -199,15 +214,21 @@ export default function SubmitScreen() {
 
     // 1.5s simulated AI analysis step
     setTimeout(() => {
-      // Fake AI rating between 55 and 97
-      const generatedRating = Math.floor(Math.random() * 43) + 55;
+      const generatedRating = Math.floor(Math.random() * 41) + 58;
       const verdict = getVerdictLabel(generatedRating);
 
       const metrics = {
-        market: Math.min(99, Math.max(45, generatedRating + Math.floor(Math.random() * 8) - 3)),
-        innovation: Math.min(99, Math.max(45, generatedRating + Math.floor(Math.random() * 10) - 4)),
-        feasibility: Math.min(99, Math.max(45, generatedRating + Math.floor(Math.random() * 6) - 2)),
+        market: Math.min(99, Math.max(50, generatedRating + Math.floor(Math.random() * 8) - 3)),
+        innovation: Math.min(99, Math.max(50, generatedRating + Math.floor(Math.random() * 10) - 4)),
+        feasibility: Math.min(99, Math.max(50, generatedRating + Math.floor(Math.random() * 6) - 2)),
       };
+
+      const thesis =
+        generatedRating >= 88
+          ? 'Exceptional expansion velocity; high customer willingness to pay with clear competitive moat.'
+          : generatedRating >= 75
+          ? 'Strong domain timing; focus on tightening initial customer acquisition costs and payback period.'
+          : 'Promising technology premise; requires deeper validation of enterprise sales cycles.';
 
       const created = addIdea({
         name,
@@ -216,12 +237,17 @@ export default function SubmitScreen() {
         rating: generatedRating,
         verdict,
         metrics,
+        category,
+        stage,
+        tam,
+        founderSignal: 'Executive Leadership Team',
+        thesis,
       });
 
       successHaptic();
       setIsAnalysing(false);
       setEvaluatedIdea(created);
-      showToast(`AI Evaluated: ${generatedRating}/100! 🚀`, 'success');
+      showToast(`Venture Audited: Score ${generatedRating}/100! 🚀`, 'success');
     }, 1500);
   };
 
@@ -249,7 +275,7 @@ export default function SubmitScreen() {
 
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={{ flex: 1 }}
+        style={styles.keyboardView}
       >
         <ScrollView
           contentContainerStyle={[
@@ -257,481 +283,422 @@ export default function SubmitScreen() {
             { paddingBottom: isDesktop ? 40 : 120 },
           ]}
           showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
         >
           <View style={styles.webContentWrapper}>
             {/* Page Header */}
-            <View style={styles.headingSection}>
-              <Text style={[styles.title, { color: theme.text }]}>Submit Startup Idea</Text>
-              <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
-                Get real-time evaluations and investor feedback from our simulated AI investor engine.
+            <View style={styles.pageHeader}>
+              <View style={styles.pageTitleRow}>
+                <Feather name="file-plus" size={22} color={theme.primary} />
+                <Text style={[styles.pageTitle, { color: theme.text }]}>
+                  AI Venture Deal Evaluation Room
+                </Text>
+              </View>
+              <Text style={[styles.pageSubtitle, { color: theme.textSecondary }]}>
+                Submit your startup pitch to receive an institutional investment committee evaluation, TAM audit, and defensibility score.
               </Text>
             </View>
 
-            {/* Desktop 2-Column or Mobile 1-Column Layout */}
-            <View style={isDesktop ? styles.desktopTwoColRow : styles.mobileOneCol}>
-              {/* Left Column: Form */}
-              <Animated.View
-                entering={FadeInDown.delay(100).springify().damping(14)}
-                style={[
-                  isDesktop ? styles.desktopFormCol : styles.mobileFormCol,
-                  animatedShakeStyle,
-                ]}
-              >
-                <View
-                  style={[
-                    styles.formCard,
-                    isDesktop && [
-                      styles.desktopFormCard,
-                      { backgroundColor: theme.card, borderColor: theme.cardBorder },
-                      theme.shadow.soft,
-                    ],
-                  ]}
-                >
-                  {/* Input 1: Startup Name */}
+            {/* Desktop 2-Column or Mobile Layout */}
+            <View style={[styles.mainLayout, isDesktop && styles.desktopMainLayout]}>
+              {/* Form Column */}
+              <View style={[styles.formColumn, isDesktop && styles.desktopFormColumn]}>
+                <Animated.View style={[styles.formCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }, theme.shadow.card, animatedShakeStyle]}>
+                  {/* Field 1: Name */}
                   <View style={styles.inputGroup}>
                     <View style={styles.labelRow}>
-                      <Text style={[styles.label, { color: theme.text }]}>Startup Name</Text>
-                      <Text style={[styles.charCounter, { color: theme.muted }]}>
-                        {name.length}/40
-                      </Text>
+                      <Text style={[styles.inputLabel, { color: theme.text }]}>Startup Venture Name</Text>
+                      <Text style={[styles.charCount, { color: theme.muted }]}>{name.length}/40</Text>
                     </View>
-                    {errors.name && <Text style={styles.errorText}>{errors.name}</Text>}
                     <View
                       style={[
                         styles.inputWrapper,
                         {
-                          backgroundColor: theme.inputBg,
-                          borderColor: errors.name
-                            ? theme.danger
-                            : nameFocused
-                            ? theme.inputFocusBorder
-                            : theme.inputBorder,
+                          backgroundColor: theme.cardSecondary,
+                          borderColor: errors.name ? theme.danger : nameFocused ? theme.primary : theme.cardBorder,
                         },
-                        nameFocused && theme.shadow.glow,
                       ]}
                     >
-                      <Feather
-                        name="briefcase"
-                        size={18}
-                        color={nameFocused ? theme.primary : theme.muted}
-                        style={styles.inputIcon}
-                      />
+                      <Feather name="briefcase" size={16} color={nameFocused ? theme.primary : theme.muted} style={styles.inputIcon} />
                       <TextInput
                         value={name}
-                        onChangeText={(text) => {
-                          setName(text);
-                          if (errors.name) setErrors({ ...errors, name: undefined });
+                        onChangeText={(txt) => {
+                          setName(txt);
+                          if (errors.name) setErrors((prev) => ({ ...prev, name: undefined }));
                         }}
                         onFocus={() => setNameFocused(true)}
                         onBlur={() => setNameFocused(false)}
-                        placeholder="e.g. Synthetix Labs, OrbitPay"
+                        placeholder="e.g. Synthetix Cloud, OrbitPay"
                         placeholderTextColor={theme.muted}
-                        style={[styles.textInput, { color: theme.text }]}
                         maxLength={40}
+                        style={[styles.textInput, { color: theme.text }]}
                       />
+                    </View>
+                    {Boolean(errors.name) && (
+                      <Text style={[styles.errorText, { color: theme.danger }]}>{errors.name}</Text>
+                    )}
+                  </View>
+
+                  {/* Sector Pills Selection */}
+                  <View style={styles.inputGroup}>
+                    <Text style={[styles.inputLabel, { color: theme.text }]}>Industry Sector</Text>
+                    <View style={styles.pillSelectorRow}>
+                      {SECTORS.map((sec) => {
+                        const isSelected = category === sec;
+                        return (
+                          <Pressable
+                            key={sec}
+                            onPress={() => {
+                              tap('light');
+                              setCategory(sec);
+                            }}
+                            style={[
+                              styles.choicePill,
+                              {
+                                backgroundColor: isSelected ? theme.primary : theme.cardSecondary,
+                                borderColor: isSelected ? theme.primary : theme.cardBorder,
+                              },
+                            ]}
+                          >
+                            <Text
+                              style={[
+                                styles.choicePillText,
+                                { color: isSelected ? '#FFFFFF' : theme.textSecondary },
+                              ]}
+                            >
+                              {sec}
+                            </Text>
+                          </Pressable>
+                        );
+                      })}
                     </View>
                   </View>
 
-                  {/* Input 2: Tagline */}
+                  {/* Stage & TAM Row */}
+                  <View style={styles.splitRow}>
+                    <View style={styles.splitCol}>
+                      <Text style={[styles.inputLabel, { color: theme.text }]}>Stage</Text>
+                      <View style={styles.choiceGroup}>
+                        {STAGES.map((stg) => {
+                          const isSel = stage === stg;
+                          return (
+                            <Pressable
+                              key={stg}
+                              onPress={() => {
+                                tap('light');
+                                setStage(stg);
+                              }}
+                              style={[
+                                styles.stageChoiceBtn,
+                                {
+                                  backgroundColor: isSel ? theme.primary : theme.cardSecondary,
+                                  borderColor: isSel ? theme.primary : theme.cardBorder,
+                                },
+                              ]}
+                            >
+                              <Text style={[styles.stageChoiceText, { color: isSel ? '#FFFFFF' : theme.textSecondary }]}>
+                                {stg}
+                              </Text>
+                            </Pressable>
+                          );
+                        })}
+                      </View>
+                    </View>
+
+                    <View style={styles.splitCol}>
+                      <Text style={[styles.inputLabel, { color: theme.text }]}>Target TAM</Text>
+                      <View style={styles.choiceGroup}>
+                        {TAM_TIERS.map((t) => {
+                          const isSel = tam === t;
+                          return (
+                            <Pressable
+                              key={t}
+                              onPress={() => {
+                                tap('light');
+                                setTam(t);
+                              }}
+                              style={[
+                                styles.stageChoiceBtn,
+                                {
+                                  backgroundColor: isSel ? theme.accent : theme.cardSecondary,
+                                  borderColor: isSel ? theme.accent : theme.cardBorder,
+                                },
+                              ]}
+                            >
+                              <Text style={[styles.stageChoiceText, { color: isSel ? '#FFFFFF' : theme.textSecondary }]}>
+                                {t}
+                              </Text>
+                            </Pressable>
+                          );
+                        })}
+                      </View>
+                    </View>
+                  </View>
+
+                  {/* Field 2: Tagline */}
                   <View style={styles.inputGroup}>
                     <View style={styles.labelRow}>
-                      <Text style={[styles.label, { color: theme.text }]}>One-Line Tagline</Text>
-                      <Text style={[styles.charCounter, { color: theme.muted }]}>
-                        {tagline.length}/90
-                      </Text>
+                      <Text style={[styles.inputLabel, { color: theme.text }]}>Executive One-Line Tagline</Text>
+                      <Text style={[styles.charCount, { color: theme.muted }]}>{tagline.length}/90</Text>
                     </View>
-                    {errors.tagline && <Text style={styles.errorText}>{errors.tagline}</Text>}
                     <View
                       style={[
                         styles.inputWrapper,
                         {
-                          backgroundColor: theme.inputBg,
-                          borderColor: errors.tagline
-                            ? theme.danger
-                            : taglineFocused
-                            ? theme.inputFocusBorder
-                            : theme.inputBorder,
+                          backgroundColor: theme.cardSecondary,
+                          borderColor: errors.tagline ? theme.danger : taglineFocused ? theme.primary : theme.cardBorder,
                         },
-                        taglineFocused && theme.shadow.glow,
                       ]}
                     >
-                      <Feather
-                        name="zap"
-                        size={18}
-                        color={taglineFocused ? theme.primary : theme.muted}
-                        style={styles.inputIcon}
-                      />
+                      <Feather name="zap" size={16} color={taglineFocused ? theme.primary : theme.muted} style={styles.inputIcon} />
                       <TextInput
                         value={tagline}
-                        onChangeText={(text) => {
-                          setTagline(text);
-                          if (errors.tagline) setErrors({ ...errors, tagline: undefined });
+                        onChangeText={(txt) => {
+                          setTagline(txt);
+                          if (errors.tagline) setErrors((prev) => ({ ...prev, tagline: undefined }));
                         }}
                         onFocus={() => setTaglineFocused(true)}
                         onBlur={() => setTaglineFocused(false)}
-                        placeholder="e.g. Autonomous cloud telemetry and healing"
+                        placeholder="e.g. Autonomous cloud infrastructure telemetry & self-healing"
                         placeholderTextColor={theme.muted}
-                        style={[styles.textInput, { color: theme.text }]}
                         maxLength={90}
+                        style={[styles.textInput, { color: theme.text }]}
                       />
                     </View>
+                    {Boolean(errors.tagline) && (
+                      <Text style={[styles.errorText, { color: theme.danger }]}>{errors.tagline}</Text>
+                    )}
                   </View>
 
-                  {/* Input 3: Description */}
+                  {/* Field 3: Description */}
                   <View style={styles.inputGroup}>
                     <View style={styles.labelRow}>
-                      <Text style={[styles.label, { color: theme.text }]}>Detailed Description</Text>
-                      <Text style={[styles.charCounter, { color: theme.muted }]}>
-                        {description.length}/400
-                      </Text>
+                      <Text style={[styles.inputLabel, { color: theme.text }]}>Problem, Technological Moat & Economics</Text>
+                      <Text style={[styles.charCount, { color: theme.muted }]}>{description.length}/400</Text>
                     </View>
-                    {errors.description && (
-                      <Text style={styles.errorText}>{errors.description}</Text>
-                    )}
                     <View
                       style={[
                         styles.textAreaWrapper,
                         {
-                          backgroundColor: theme.inputBg,
-                          borderColor: errors.description
-                            ? theme.danger
-                            : descriptionFocused
-                            ? theme.inputFocusBorder
-                            : theme.inputBorder,
+                          backgroundColor: theme.cardSecondary,
+                          borderColor: errors.description ? theme.danger : descriptionFocused ? theme.primary : theme.cardBorder,
                         },
-                        descriptionFocused && theme.shadow.glow,
                       ]}
                     >
                       <TextInput
                         value={description}
-                        onChangeText={(text) => {
-                          setDescription(text);
-                          if (errors.description)
-                            setErrors({ ...errors, description: undefined });
+                        onChangeText={(txt) => {
+                          setDescription(txt);
+                          if (errors.description) setErrors((prev) => ({ ...prev, description: undefined }));
                         }}
                         onFocus={() => setDescriptionFocused(true)}
                         onBlur={() => setDescriptionFocused(false)}
-                        placeholder="Describe your target market, unfair technological moat, unit economics, and customer problem..."
+                        placeholder="Detail the target customer problem, unfair technological advantage, switching costs, and why now..."
                         placeholderTextColor={theme.muted}
-                        style={[styles.textArea, { color: theme.text }]}
-                        multiline
-                        numberOfLines={5}
-                        textAlignVertical="top"
                         maxLength={400}
+                        multiline
+                        numberOfLines={4}
+                        style={[styles.textAreaInput, { color: theme.text }]}
+                        textAlignVertical="top"
                       />
                     </View>
+                    {Boolean(errors.description) && (
+                      <Text style={[styles.errorText, { color: theme.danger }]}>{errors.description}</Text>
+                    )}
                   </View>
 
-                  {/* Submit Button with Reanimated Press-Scale */}
+                  {/* Submit Button */}
                   <Animated.View style={animatedButtonStyle}>
                     <Pressable
                       onPress={handleSubmit}
-                      onPressIn={() => {
-                        buttonScale.value = withSpring(0.96, { damping: 15 });
-                      }}
-                      onPressOut={() => {
-                        buttonScale.value = withSpring(1, { damping: 15 });
-                      }}
                       disabled={isAnalysing}
-                      style={[styles.submitButton, theme.shadow.glow]}
-                      accessibilityRole="button"
-                      accessibilityLabel="Evaluate Idea with AI"
+                      style={[styles.submitButton, theme.shadow.soft]}
                     >
                       <LinearGradient
                         colors={theme.gradients.primary}
                         start={{ x: 0, y: 0 }}
                         end={{ x: 1, y: 1 }}
-                        style={styles.submitGradient}
+                        style={styles.buttonGradient}
                       >
-                        <Feather name="cpu" size={19} color="#FFFFFF" />
+                        <Feather name="cpu" size={18} color="#FFFFFF" />
                         <Text style={styles.submitButtonText}>
-                          Evaluate Idea with AI
+                          {isAnalysing ? 'Synthesizing Evaluation…' : 'Run Institutional AI Audit'}
                         </Text>
                       </LinearGradient>
                     </Pressable>
                   </Animated.View>
-                </View>
-              </Animated.View>
+                </Animated.View>
+              </View>
 
-              {/* Right Column (Desktop Web Application Side Panel): AI Evaluation Criteria */}
-              {isDesktop && (
-                <View style={styles.desktopSidePanelCol}>
-                  <View
-                    style={[
-                      styles.methodologyCard,
-                      { backgroundColor: theme.card, borderColor: theme.cardBorder },
-                      theme.shadow.soft,
-                    ]}
-                  >
-                    <View style={styles.sidePanelHeader}>
-                      <View style={[styles.sideIconBadge, { backgroundColor: theme.cardSecondary }]}>
-                        <Feather name="bar-chart-2" size={18} color={theme.primary} />
-                      </View>
-                      <Text style={[styles.sidePanelTitle, { color: theme.text }]}>
-                        Evaluation Framework
-                      </Text>
-                    </View>
+              {/* Right Column: Institutional Audit Methodology (Desktop) */}
+              <View style={[styles.infoColumn, isDesktop && styles.desktopInfoColumn]}>
+                <View style={[styles.infoCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }, theme.shadow.card]}>
+                  <View style={styles.infoHeaderRow}>
+                    <Feather name="shield" size={18} color={theme.primary} />
+                    <Text style={[styles.infoCardTitle, { color: theme.text }]}>Evaluation Framework</Text>
+                  </View>
+                  <Text style={[styles.infoCardDesc, { color: theme.muted }]}>
+                    Our algorithmic evaluator simulates criteria used by institutional venture funds and angel syndicates:
+                  </Text>
 
-                    <Text style={[styles.sidePanelDesc, { color: theme.muted }]}>
-                      Our simulated angel evaluator models criteria used by top-tier venture funds:
-                    </Text>
-
-                    <View style={styles.criteriaList}>
-                      <View style={styles.criteriaItem}>
-                        <View style={[styles.criteriaDot, { backgroundColor: theme.primary }]} />
-                        <View style={{ flex: 1 }}>
-                          <Text style={[styles.criteriaName, { color: theme.text }]}>
-                            Market Size & TAM
-                          </Text>
-                          <Text style={[styles.criteriaText, { color: theme.muted }]}>
-                            Addressable buyer segment, expansion velocity, and budget headroom.
-                          </Text>
-                        </View>
-                      </View>
-
-                      <View style={styles.criteriaItem}>
-                        <View style={[styles.criteriaDot, { backgroundColor: theme.accent }]} />
-                        <View style={{ flex: 1 }}>
-                          <Text style={[styles.criteriaName, { color: theme.text }]}>
-                            Innovation & Defensibility
-                          </Text>
-                          <Text style={[styles.criteriaText, { color: theme.muted }]}>
-                            Proprietary IP, network effects, and protection from clone competitors.
-                          </Text>
-                        </View>
-                      </View>
-
-                      <View style={styles.criteriaItem}>
-                        <View style={[styles.criteriaDot, { backgroundColor: theme.gold }]} />
-                        <View style={{ flex: 1 }}>
-                          <Text style={[styles.criteriaName, { color: theme.text }]}>
-                            Execution Feasibility
-                          </Text>
-                          <Text style={[styles.criteriaText, { color: theme.muted }]}>
-                            Technical viability, capital requirements, and time-to-market.
-                          </Text>
-                        </View>
-                      </View>
-                    </View>
-
-                    {/* Pro Tip Box */}
-                    <View
-                      style={[
-                        styles.proTipBox,
-                        { backgroundColor: theme.cardSecondary, borderColor: theme.cardBorder },
-                      ]}
-                    >
-                      <Feather name="check-circle" size={16} color={theme.primary} />
-                      <Text style={[styles.proTipText, { color: theme.textSecondary }]}>
-                        <Text style={{ fontFamily: 'Inter_700Bold' }}>Tip for 90+ Score: </Text>
-                        Articulate your unfair advantage and specific target ICP in the description.
+                  <View style={styles.criteriaItem}>
+                    <View style={[styles.criteriaDot, { backgroundColor: theme.primary }]} />
+                    <View style={styles.criteriaTextCol}>
+                      <Text style={[styles.criteriaTitle, { color: theme.text }]}>Addressable Market & TAM</Text>
+                      <Text style={[styles.criteriaDesc, { color: theme.muted }]}>
+                        Buyer segment willingness to pay, budget headroom, and expansion velocity.
                       </Text>
                     </View>
                   </View>
+
+                  <View style={styles.criteriaItem}>
+                    <View style={[styles.criteriaDot, { backgroundColor: theme.accent }]} />
+                    <View style={styles.criteriaTextCol}>
+                      <Text style={[styles.criteriaTitle, { color: theme.text }]}>Moat & IP Defensibility</Text>
+                      <Text style={[styles.criteriaDesc, { color: theme.muted }]}>
+                        Proprietary data flywheels, high switching costs, and immunity to big-tech clones.
+                      </Text>
+                    </View>
+                  </View>
+
+                  <View style={styles.criteriaItem}>
+                    <View style={[styles.criteriaDot, { backgroundColor: theme.success }]} />
+                    <View style={styles.criteriaTextCol}>
+                      <Text style={[styles.criteriaTitle, { color: theme.text }]}>Unit Economics & Feasibility</Text>
+                      <Text style={[styles.criteriaDesc, { color: theme.muted }]}>
+                        Technical viability, CAC/LTV trajectory, and capital efficiency.
+                      </Text>
+                    </View>
+                  </View>
+
+                  <View style={[styles.proTipBox, { backgroundColor: theme.cardSecondary, borderColor: theme.cardBorder }]}>
+                    <Feather name="info" size={14} color={theme.primary} />
+                    <Text style={[styles.proTipText, { color: theme.text }]}>
+                      Pro Tip: Startups articulating an unfair proprietary advantage consistently score in the top 90th percentile.
+                    </Text>
+                  </View>
                 </View>
-              )}
+              </View>
             </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
 
-      {/* 1.5s AI Analysing Modal Overlay with Shimmer and Rotating Fun Messages */}
+      {/* Full-Screen AI Evaluation Overlay */}
       {isAnalysing && (
         <Animated.View
           entering={FadeIn.duration(200)}
           exiting={FadeOut.duration(200)}
-          style={[styles.analysingOverlay, { backgroundColor: theme.overlay }]}
+          style={[styles.overlayContainer, { backgroundColor: theme.overlay }]}
         >
-          <View
-            style={[
-              styles.analysingCard,
-              {
-                backgroundColor: theme.card,
-                borderColor: theme.accentGlow,
-              },
-              theme.shadow.glow,
-            ]}
-          >
-            {/* Rotating Radar Icon */}
-            <Animated.View style={[styles.scannerCircle, animatedRadarStyle]}>
+          <View style={[styles.radarModal, { backgroundColor: theme.card, borderColor: theme.cardBorder }, theme.shadow.glow]}>
+            <Animated.View style={[styles.radarCircle, { borderColor: theme.primary }, animatedRadarStyle]}>
               <LinearGradient
-                colors={theme.gradients.primary}
-                style={styles.scannerInner}
-              >
-                <Feather name="loader" size={30} color="#FFFFFF" />
-              </LinearGradient>
+                colors={['transparent', theme.accentGlow]}
+                style={styles.radarSweep}
+              />
+              <Feather name="cpu" size={28} color={theme.primary} />
             </Animated.View>
 
             <Text style={[styles.analysingTitle, { color: theme.text }]}>
-              AI Evaluator
+              Evaluating Venture Deal
             </Text>
 
-            {/* Rotating Fun Message */}
-            <Text style={[styles.analysingStatus, { color: theme.accent }]}>
+            <Text style={[styles.analysingMessage, { color: theme.primary }]}>
               {FUN_AI_MESSAGES[messageIndex]}
             </Text>
 
-            <View style={[styles.shimmerContainer, { backgroundColor: theme.cardSecondary }]}>
-              <Shimmer height={6} width="100%" borderRadius={3} />
-            </View>
-
-            <View style={styles.aiPillRow}>
-              <View style={[styles.miniBadge, { backgroundColor: theme.cardSecondary }]}>
-                <Text style={[styles.miniBadgeText, { color: theme.muted }]}>
-                  Market TAM
-                </Text>
-              </View>
-              <View style={[styles.miniBadge, { backgroundColor: theme.cardSecondary }]}>
-                <Text style={[styles.miniBadgeText, { color: theme.muted }]}>
-                  Moat Defensibility
-                </Text>
-              </View>
-              <View style={[styles.miniBadge, { backgroundColor: theme.cardSecondary }]}>
-                <Text style={[styles.miniBadgeText, { color: theme.muted }]}>
-                  Execution Risk
-                </Text>
-              </View>
+            <View style={styles.shimmerWrapper}>
+              <Shimmer height={5} borderRadius={3} />
             </View>
           </View>
         </Animated.View>
       )}
 
-      {/* Result Modal: animated rating ring counting up 0 to score, metric bars filling, confetti burst if score > 85 */}
+      {/* Evaluation Results Modal */}
       {evaluatedIdea && (
         <Animated.View
-          entering={FadeIn.duration(220)}
-          exiting={FadeOut.duration(200)}
-          style={[styles.analysingOverlay, { backgroundColor: theme.overlay }]}
+          entering={FadeIn.duration(250)}
+          style={[styles.overlayContainer, { backgroundColor: theme.overlay }]}
         >
-          {/* Confetti burst if score > 85 */}
-          {evaluatedIdea.rating > 85 && <ConfettiBurst />}
+          {evaluatedIdea.rating >= 85 && <ConfettiBurst />}
 
           <Animated.View
-            entering={FadeInDown.springify().damping(14)}
+            entering={FadeInDown.springify().damping(15)}
             style={[
-              styles.resultCard,
-              {
-                backgroundColor: theme.card,
-                borderColor: theme.accentGlow,
-              },
-              theme.shadow.glow,
+              styles.resultModal,
+              { backgroundColor: theme.card, borderColor: theme.cardBorder },
+              theme.shadow.card,
             ]}
           >
-            {/* Verdict Chip */}
-            <View style={styles.resultBadgeRow}>
-              <LinearGradient
-                colors={theme.gradients.primary}
-                style={styles.aiVerdictBadge}
-              >
-                <Feather name="award" size={13} color="#FFFFFF" />
-                <Text style={styles.aiVerdictBadgeText}>
-                  {evaluatedIdea.verdict}
-                </Text>
-              </LinearGradient>
-            </View>
-
-            <Text style={[styles.resultIdeaName, { color: theme.text }]}>
-              {evaluatedIdea.name}
-            </Text>
-            <Text style={[styles.resultIdeaTagline, { color: theme.textSecondary }]}>
-              {evaluatedIdea.tagline}
-            </Text>
-
-            {/* Rating Ring counting up 0 to score */}
-            <View style={styles.resultRingContainer}>
-              <RatingRing rating={evaluatedIdea.rating} size={96} animateCount delay={100} />
-            </View>
-
-            {/* 3 Metric Bars Filling Up */}
-            <View style={[styles.metricsContainer, { backgroundColor: theme.cardSecondary }]}>
-              <View style={styles.metricItem}>
-                <View style={styles.metricItemHeader}>
-                  <Text style={[styles.metricName, { color: theme.text }]}>Market Size</Text>
-                  <Text style={[styles.metricScore, { color: theme.primary }]}>
-                    {evaluatedIdea.metrics.market}%
+            {/* Header */}
+            <View style={styles.resultHeader}>
+              <View style={styles.resultScoreRow}>
+                <RatingRing rating={evaluatedIdea.rating} size={76} />
+                <View style={styles.resultMetaCol}>
+                  <Text style={[styles.resultVentureName, { color: theme.text }]} numberOfLines={1}>
+                    {evaluatedIdea.name}
                   </Text>
-                </View>
-                <View style={[styles.metricBarTrack, { backgroundColor: theme.card }]}>
-                  <Animated.View
-                    style={[
-                      styles.metricBarFilled,
-                      { backgroundColor: theme.primary },
-                      animatedMarketStyle,
-                    ]}
-                  />
-                </View>
-              </View>
-
-              <View style={styles.metricItem}>
-                <View style={styles.metricItemHeader}>
-                  <Text style={[styles.metricName, { color: theme.text }]}>Innovation</Text>
-                  <Text style={[styles.metricScore, { color: theme.accent }]}>
-                    {evaluatedIdea.metrics.innovation}%
+                  <View style={[styles.resultVerdictPill, { backgroundColor: theme.cardSecondary, borderColor: theme.cardBorder }]}>
+                    <Text style={[styles.resultVerdictText, { color: theme.primary }]}>
+                      {evaluatedIdea.verdict}
+                    </Text>
+                  </View>
+                  <Text style={[styles.resultSectorText, { color: theme.muted }]}>
+                    {evaluatedIdea.category} • {evaluatedIdea.tam}
                   </Text>
-                </View>
-                <View style={[styles.metricBarTrack, { backgroundColor: theme.card }]}>
-                  <Animated.View
-                    style={[
-                      styles.metricBarFilled,
-                      { backgroundColor: theme.accent },
-                      animatedInnovationStyle,
-                    ]}
-                  />
-                </View>
-              </View>
-
-              <View style={styles.metricItem}>
-                <View style={styles.metricItemHeader}>
-                  <Text style={[styles.metricName, { color: theme.text }]}>Feasibility</Text>
-                  <Text style={[styles.metricScore, { color: theme.gold }]}>
-                    {evaluatedIdea.metrics.feasibility}%
-                  </Text>
-                </View>
-                <View style={[styles.metricBarTrack, { backgroundColor: theme.card }]}>
-                  <Animated.View
-                    style={[
-                      styles.metricBarFilled,
-                      { backgroundColor: theme.gold },
-                      animatedFeasibilityStyle,
-                    ]}
-                  />
                 </View>
               </View>
             </View>
 
-            {/* Actions: View in Feed / Submit Another */}
-            <View style={styles.resultActionRow}>
+            {/* Metric Bars */}
+            <View style={[styles.resultMetricsBox, { backgroundColor: theme.cardSecondary, borderColor: theme.cardBorder }]}>
+              <View style={styles.metricItemRow}>
+                <Text style={[styles.metricName, { color: theme.text }]}>Addressable TAM</Text>
+                <View style={[styles.modalMetricBarBg, { backgroundColor: theme.cardBorder }]}>
+                  <Animated.View style={[styles.modalMetricBarFill, { backgroundColor: theme.primary }, animatedMarketStyle]} />
+                </View>
+                <Text style={[styles.metricScoreText, { color: theme.text }]}>{evaluatedIdea.metrics.market}%</Text>
+              </View>
+
+              <View style={styles.metricItemRow}>
+                <Text style={[styles.metricName, { color: theme.text }]}>Moat & Innovation</Text>
+                <View style={[styles.modalMetricBarBg, { backgroundColor: theme.cardBorder }]}>
+                  <Animated.View style={[styles.modalMetricBarFill, { backgroundColor: theme.accent }, animatedInnovationStyle]} />
+                </View>
+                <Text style={[styles.metricScoreText, { color: theme.text }]}>{evaluatedIdea.metrics.innovation}%</Text>
+              </View>
+
+              <View style={styles.metricItemRow}>
+                <Text style={[styles.metricName, { color: theme.text }]}>Unit Feasibility</Text>
+                <View style={[styles.modalMetricBarBg, { backgroundColor: theme.cardBorder }]}>
+                  <Animated.View style={[styles.modalMetricBarFill, { backgroundColor: theme.success }, animatedFeasibilityStyle]} />
+                </View>
+                <Text style={[styles.metricScoreText, { color: theme.text }]}>{evaluatedIdea.metrics.feasibility}%</Text>
+              </View>
+            </View>
+
+            {/* Thesis */}
+            {Boolean(evaluatedIdea.thesis) && (
+              <View style={[styles.resultThesisBox, { borderColor: theme.cardBorder }]}>
+                <Text style={[styles.thesisLabel, { color: theme.primary }]}>INVESTMENT COMMITTEE MEMO</Text>
+                <Text style={[styles.thesisBody, { color: theme.textSecondary }]}>{evaluatedIdea.thesis}</Text>
+              </View>
+            )}
+
+            {/* Modal Buttons */}
+            <View style={styles.modalButtonsRow}>
               <Pressable
-                onPress={handleDoneAndNavigate}
-                style={[styles.resultPrimaryBtn, theme.shadow.soft]}
-                accessibilityRole="button"
-                accessibilityLabel="View in Feed"
+                onPress={handleResetForm}
+                style={[styles.modalSecondaryBtn, { backgroundColor: theme.cardSecondary, borderColor: theme.cardBorder }]}
               >
-                <LinearGradient
-                  colors={theme.gradients.primary}
-                  style={styles.resultBtnGradient}
-                >
-                  <Feather name="compass" size={17} color="#FFFFFF" />
-                  <Text style={styles.resultPrimaryText}>View in Ideas Feed</Text>
-                </LinearGradient>
+                <Text style={[styles.modalSecondaryText, { color: theme.text }]}>Audit Another</Text>
               </Pressable>
 
               <Pressable
-                onPress={handleResetForm}
-                style={[
-                  styles.resultSecondaryBtn,
-                  {
-                    backgroundColor: theme.cardSecondary,
-                    borderColor: theme.cardBorder,
-                  },
-                ]}
-                accessibilityRole="button"
-                accessibilityLabel="Submit another idea"
+                onPress={handleDoneAndNavigate}
+                style={[styles.modalPrimaryBtn, { backgroundColor: theme.primary }]}
               >
-                <Text style={[styles.resultSecondaryText, { color: theme.text }]}>
-                  Submit Another Idea
-                </Text>
+                <Text style={styles.modalPrimaryText}>View in Syndicate Directory</Text>
               </Pressable>
             </View>
           </Animated.View>
@@ -745,125 +712,66 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  keyboardView: {
+    flex: 1,
+  },
   scrollContent: {
-    paddingHorizontal: 20,
+    flexGrow: 1,
     paddingTop: 16,
   },
   webContentWrapper: {
     width: '100%',
-    maxWidth: 1200,
+    maxWidth: 1240,
     alignSelf: 'center',
+    paddingHorizontal: 16,
   },
-  headingSection: {
+  pageHeader: {
     marginBottom: 20,
   },
-  title: {
-    fontSize: 26,
-    fontFamily: 'Inter_800ExtraBold',
-    letterSpacing: -0.4,
+  pageTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
     marginBottom: 4,
   },
-  subtitle: {
-    fontSize: 14,
-    lineHeight: 20,
-    fontFamily: 'Inter_500Medium',
+  pageTitle: {
+    fontFamily: 'Inter_800ExtraBold',
+    fontSize: 20,
+    letterSpacing: -0.5,
   },
-  // Responsive layout: 2-column on desktop, 1-column on mobile
-  desktopTwoColRow: {
+  pageSubtitle: {
+    fontFamily: 'Inter_500Medium',
+    fontSize: 13,
+    lineHeight: 19,
+    maxWidth: 680,
+  },
+  mainLayout: {
+    flexDirection: 'column',
+    gap: 20,
+  },
+  desktopMainLayout: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 24,
+  },
+  formColumn: {
     width: '100%',
   },
-  mobileOneCol: {
+  desktopFormColumn: {
+    flex: 1.4,
+  },
+  infoColumn: {
     width: '100%',
   },
-  desktopFormCol: {
-    flex: 1.3,
-  },
-  mobileFormCol: {
-    width: '100%',
-  },
-  desktopSidePanelCol: {
+  desktopInfoColumn: {
     flex: 1,
   },
   formCard: {
-    width: '100%',
-  },
-  desktopFormCard: {
-    padding: 24,
-    borderRadius: 24,
-    borderWidth: 1.2,
-  },
-  methodologyCard: {
-    padding: 24,
-    borderRadius: 24,
-    borderWidth: 1.2,
-    gap: 16,
-  },
-  sidePanelHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  sideIconBadge: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  sidePanelTitle: {
-    fontSize: 17,
-    fontFamily: 'Inter_800ExtraBold',
-    letterSpacing: -0.2,
-  },
-  sidePanelDesc: {
-    fontSize: 13,
-    lineHeight: 19,
-    fontFamily: 'Inter_400Regular',
-  },
-  criteriaList: {
-    gap: 14,
-  },
-  criteriaItem: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 10,
-  },
-  criteriaDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginTop: 5,
-  },
-  criteriaName: {
-    fontSize: 13,
-    fontFamily: 'Inter_700Bold',
-    marginBottom: 2,
-  },
-  criteriaText: {
-    fontSize: 12,
-    lineHeight: 17,
-    fontFamily: 'Inter_400Regular',
-  },
-  proTipBox: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    padding: 12,
-    borderRadius: 14,
+    borderRadius: 16,
     borderWidth: 1,
-    gap: 10,
-    marginTop: 4,
-  },
-  proTipText: {
-    flex: 1,
-    fontSize: 12,
-    lineHeight: 18,
-    fontFamily: 'Inter_500Medium',
+    padding: 20,
   },
   inputGroup: {
-    marginBottom: 18,
+    marginBottom: 16,
   },
   labelRow: {
     flexDirection: 'row',
@@ -871,241 +779,324 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 6,
   },
-  label: {
-    fontSize: 13,
+  inputLabel: {
     fontFamily: 'Inter_700Bold',
+    fontSize: 12.5,
     letterSpacing: 0.1,
   },
-  charCounter: {
+  charCount: {
     fontSize: 11,
-    fontFamily: 'Inter_600SemiBold',
-  },
-  errorText: {
-    color: '#EF4444',
-    fontSize: 11,
-    fontFamily: 'Inter_600SemiBold',
-    marginBottom: 4,
+    fontFamily: 'Inter_500Medium',
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 16,
-    borderWidth: 1.4,
-    paddingHorizontal: 14,
-    height: 50,
+    borderRadius: 10,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    height: 44,
   },
   inputIcon: {
     marginRight: 10,
   },
   textInput: {
     flex: 1,
-    fontSize: 14,
+    height: '100%',
     fontFamily: 'Inter_500Medium',
+    fontSize: 13,
   },
-  textAreaWrapper: {
-    borderRadius: 16,
-    borderWidth: 1.4,
-    padding: 14,
-    minHeight: 120,
+  pillSelectorRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginTop: 6,
   },
-  textArea: {
-    fontSize: 14,
-    fontFamily: 'Inter_500Medium',
-    lineHeight: 22,
+  choicePill: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  choicePillText: {
+    fontSize: 11.5,
+    fontFamily: 'Inter_600SemiBold',
+  },
+  splitRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 16,
+  },
+  splitCol: {
     flex: 1,
   },
-  submitButton: {
-    marginTop: 8,
-    borderRadius: 20,
-    overflow: 'hidden',
+  choiceGroup: {
+    gap: 6,
+    marginTop: 6,
   },
-  submitGradient: {
-    flexDirection: 'row',
+  stageChoiceBtn: {
+    paddingVertical: 7,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    borderWidth: 1,
     alignItems: 'center',
+  },
+  stageChoiceText: {
+    fontSize: 11.5,
+    fontFamily: 'Inter_600SemiBold',
+  },
+  textAreaWrapper: {
+    borderRadius: 10,
+    borderWidth: 1,
+    padding: 12,
+    minHeight: 100,
+  },
+  textAreaInput: {
+    flex: 1,
+    fontFamily: 'Inter_400Regular',
+    fontSize: 13,
+    lineHeight: 19,
+  },
+  errorText: {
+    fontSize: 11,
+    fontFamily: 'Inter_500Medium',
+    marginTop: 4,
+  },
+  submitButton: {
+    borderRadius: 12,
+    overflow: 'hidden',
+    marginTop: 8,
+  },
+  buttonGradient: {
+    flexDirection: 'row',
     justifyContent: 'center',
-    paddingVertical: 16,
-    borderRadius: 20,
+    alignItems: 'center',
+    paddingVertical: 13,
     gap: 8,
-    minHeight: 50,
   },
   submitButtonText: {
     color: '#FFFFFF',
-    fontSize: 15,
     fontFamily: 'Inter_700Bold',
-    letterSpacing: 0.3,
+    fontSize: 14,
+    letterSpacing: 0.2,
   },
-  analysingOverlay: {
+  infoCard: {
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 20,
+  },
+  infoHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
+  infoCardTitle: {
+    fontFamily: 'Inter_700Bold',
+    fontSize: 15,
+  },
+  infoCardDesc: {
+    fontSize: 12.5,
+    lineHeight: 18,
+    fontFamily: 'Inter_400Regular',
+    marginBottom: 16,
+  },
+  criteriaItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+    marginBottom: 14,
+  },
+  criteriaDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginTop: 5,
+  },
+  criteriaTextCol: {
+    flex: 1,
+  },
+  criteriaTitle: {
+    fontSize: 12.5,
+    fontFamily: 'Inter_700Bold',
+    marginBottom: 2,
+  },
+  criteriaDesc: {
+    fontSize: 11.5,
+    lineHeight: 16,
+    fontFamily: 'Inter_400Regular',
+  },
+  proTipBox: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+    padding: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    marginTop: 8,
+  },
+  proTipText: {
+    flex: 1,
+    fontSize: 11.5,
+    lineHeight: 17,
+    fontFamily: 'Inter_500Medium',
+  },
+  overlayContainer: {
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 9999,
-    paddingHorizontal: 20,
+    zIndex: 1000,
+    padding: 20,
   },
-  analysingCard: {
+  radarModal: {
     width: '100%',
     maxWidth: 380,
+    borderRadius: 20,
+    borderWidth: 1,
     padding: 28,
-    borderRadius: 28,
-    borderWidth: 1.5,
     alignItems: 'center',
   },
-  scannerCircle: {
-    width: 68,
-    height: 68,
-    borderRadius: 34,
+  radarCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    borderWidth: 2,
     justifyContent: 'center',
     alignItems: 'center',
+    position: 'relative',
     marginBottom: 18,
+    overflow: 'hidden',
   },
-  scannerInner: {
-    width: 68,
-    height: 68,
-    borderRadius: 34,
-    justifyContent: 'center',
-    alignItems: 'center',
+  radarSweep: {
+    ...StyleSheet.absoluteFillObject,
   },
   analysingTitle: {
-    fontSize: 19,
-    fontFamily: 'Inter_800ExtraBold',
+    fontFamily: 'Inter_700Bold',
+    fontSize: 17,
     marginBottom: 6,
-    textAlign: 'center',
   },
-  analysingStatus: {
-    fontSize: 13,
+  analysingMessage: {
     fontFamily: 'Inter_600SemiBold',
-    marginBottom: 20,
+    fontSize: 13,
+    marginBottom: 18,
     textAlign: 'center',
   },
-  shimmerContainer: {
+  shimmerWrapper: {
     width: '100%',
+  },
+  resultModal: {
+    width: '100%',
+    maxWidth: 480,
+    borderRadius: 20,
+    borderWidth: 1,
+    padding: 24,
+  },
+  resultHeader: {
+    marginBottom: 16,
+  },
+  resultScoreRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  resultMetaCol: {
+    flex: 1,
+  },
+  resultVentureName: {
+    fontFamily: 'Inter_800ExtraBold',
+    fontSize: 18,
+    marginBottom: 4,
+  },
+  resultVerdictPill: {
+    paddingVertical: 3,
+    paddingHorizontal: 8,
+    borderRadius: 6,
+    borderWidth: 1,
+    alignSelf: 'flex-start',
+    marginBottom: 4,
+  },
+  resultVerdictText: {
+    fontFamily: 'Inter_700Bold',
+    fontSize: 11,
+  },
+  resultSectorText: {
+    fontFamily: 'Inter_500Medium',
+    fontSize: 11.5,
+  },
+  resultMetricsBox: {
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: 14,
+    gap: 10,
+    marginBottom: 14,
+  },
+  metricItemRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  metricName: {
+    width: 110,
+    fontSize: 11.5,
+    fontFamily: 'Inter_600SemiBold',
+  },
+  modalMetricBarBg: {
+    flex: 1,
     height: 6,
     borderRadius: 3,
     overflow: 'hidden',
-    marginBottom: 18,
   },
-  aiPillRow: {
-    flexDirection: 'row',
-    gap: 6,
+  modalMetricBarFill: {
+    height: '100%',
+    borderRadius: 3,
   },
-  miniBadge: {
-    paddingVertical: 5,
-    paddingHorizontal: 9,
-    borderRadius: 10,
-  },
-  miniBadgeText: {
-    fontSize: 11,
-    fontFamily: 'Inter_600SemiBold',
-  },
-  resultCard: {
-    width: '100%',
-    maxWidth: 420,
-    padding: 28,
-    borderRadius: 28,
-    borderWidth: 1.5,
-    alignItems: 'center',
-  },
-  resultBadgeRow: {
-    marginBottom: 10,
-  },
-  aiVerdictBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 6,
-    paddingHorizontal: 14,
-    borderRadius: 14,
-    gap: 6,
-  },
-  aiVerdictBadgeText: {
-    color: '#FFFFFF',
-    fontSize: 12,
+  metricScoreText: {
+    width: 34,
+    textAlign: 'right',
+    fontSize: 11.5,
     fontFamily: 'Inter_700Bold',
-    letterSpacing: 0.2,
   },
-  resultIdeaName: {
-    fontSize: 22,
-    fontFamily: 'Inter_800ExtraBold',
-    textAlign: 'center',
+  resultThesisBox: {
+    borderTopWidth: 1,
+    paddingTop: 12,
+    marginBottom: 16,
+  },
+  thesisLabel: {
+    fontSize: 10,
+    fontFamily: 'Inter_700Bold',
+    letterSpacing: 0.6,
     marginBottom: 4,
   },
-  resultIdeaTagline: {
-    fontSize: 12,
-    fontFamily: 'Inter_600SemiBold',
-    textAlign: 'center',
-    marginBottom: 14,
-    paddingHorizontal: 8,
+  thesisBody: {
+    fontSize: 12.5,
+    lineHeight: 18,
+    fontFamily: 'Inter_500Medium',
   },
-  resultRingContainer: {
-    marginVertical: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  metricsContainer: {
-    width: '100%',
-    borderRadius: 16,
-    padding: 16,
-    marginVertical: 14,
-    gap: 12,
-  },
-  metricItem: {
-    gap: 4,
-  },
-  metricItemHeader: {
+  modalButtonsRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  metricName: {
-    fontSize: 12,
-    fontFamily: 'Inter_600SemiBold',
-  },
-  metricScore: {
-    fontSize: 12,
-    fontFamily: 'Inter_800ExtraBold',
-  },
-  metricBarTrack: {
-    width: '100%',
-    height: 7,
-    borderRadius: 3.5,
-    overflow: 'hidden',
-  },
-  metricBarFilled: {
-    height: '100%',
-    borderRadius: 3.5,
-  },
-  resultActionRow: {
-    width: '100%',
     gap: 10,
-    marginTop: 4,
   },
-  resultPrimaryBtn: {
-    borderRadius: 18,
-    overflow: 'hidden',
-    width: '100%',
-  },
-  resultBtnGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 14,
-    gap: 8,
-    minHeight: 48,
-  },
-  resultPrimaryText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontFamily: 'Inter_700Bold',
-  },
-  resultSecondaryBtn: {
-    width: '100%',
-    paddingVertical: 13,
-    borderRadius: 18,
+  modalSecondaryBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 10,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 48,
   },
-  resultSecondaryText: {
-    fontSize: 13,
+  modalSecondaryText: {
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 12.5,
+  },
+  modalPrimaryBtn: {
+    flex: 1.5,
+    paddingVertical: 10,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalPrimaryText: {
+    color: '#FFFFFF',
     fontFamily: 'Inter_700Bold',
+    fontSize: 12.5,
   },
 });

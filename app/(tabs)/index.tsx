@@ -7,17 +7,12 @@ import {
   Pressable,
   TextInput,
   RefreshControl,
-  LayoutChangeEvent,
   useWindowDimensions,
+  ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
-import { LinearGradient } from 'expo-linear-gradient';
-import { router } from 'expo-router';
 import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
   FadeInDown,
 } from 'react-native-reanimated';
 import { Header } from '../../components/Header';
@@ -26,39 +21,29 @@ import { useIdeaStore } from '../../store/useIdeaStore';
 import { useTheme } from '../../theme/colors';
 import { tap } from '../../utils/haptics';
 
-type SortMode = 'rating' | 'votes';
+type SortMode = 'rating' | 'votes' | 'recent';
+
+const CATEGORIES = [
+  'All Sectors',
+  'AI Infrastructure',
+  'B2B SaaS',
+  'NeuroTech',
+  'ClimateTech',
+  'BioTech',
+];
 
 export default function IdeasScreen() {
-  const [sortMode, setSortMode] = useState<SortMode>('rating');
+  const theme = useTheme();
+  const ideas = useIdeaStore((s) => s.ideas);
+
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('All Sectors');
+  const [sortMode, setSortMode] = useState<SortMode>('rating');
   const [refreshing, setRefreshing] = useState(false);
-  const [segmentWidth, setSegmentWidth] = useState(0);
 
   const { width } = useWindowDimensions();
   const isDesktop = width >= 768;
   const isWide = width >= 960;
-
-  const ideas = useIdeaStore((s) => s.ideas);
-  const theme = useTheme();
-
-  // Sliding indicator for Segmented Control
-  const indicatorX = useSharedValue(0);
-
-  const halfWidth = segmentWidth > 0 ? (segmentWidth - 8) / 2 : 0;
-
-  useEffect(() => {
-    if (halfWidth > 0) {
-      indicatorX.value = withSpring(sortMode === 'rating' ? 0 : halfWidth, {
-        damping: 18,
-        stiffness: 220,
-      });
-    }
-  }, [sortMode, halfWidth, indicatorX]);
-
-  const animatedIndicatorStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: indicatorX.value }],
-    width: halfWidth,
-  }));
 
   // Stats calculation
   const totalVotes = useMemo(() => {
@@ -71,6 +56,11 @@ export default function IdeasScreen() {
     return Math.round(sum / ideas.length);
   }, [ideas]);
 
+  const topIdea = useMemo(() => {
+    if (ideas.length === 0) return null;
+    return [...ideas].sort((a, b) => b.rating - a.rating)[0];
+  }, [ideas]);
+
   // Animated Count-Up for Stats
   const prevStats = useRef({ ideas: ideas.length, votes: totalVotes, avg: avgScore });
   const [displayIdeasCount, setDisplayIdeasCount] = useState(ideas.length);
@@ -80,7 +70,7 @@ export default function IdeasScreen() {
   useEffect(() => {
     let frameId: number;
     const startTime = Date.now();
-    const duration = 800;
+    const duration = 700;
 
     const startIdeas = prevStats.current.ideas;
     const startVotes = prevStats.current.votes;
@@ -113,38 +103,37 @@ export default function IdeasScreen() {
   // Filtered & Sorted Ideas
   const filteredIdeas = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
-    const list = ideas.filter(
-      (item) =>
+    const list = ideas.filter((item) => {
+      const matchesSearch =
+        !q ||
         item.name.toLowerCase().includes(q) ||
         item.tagline.toLowerCase().includes(q) ||
-        item.description.toLowerCase().includes(q)
-    );
+        item.description.toLowerCase().includes(q) ||
+        (item.category && item.category.toLowerCase().includes(q));
+
+      const matchesCat =
+        selectedCategory === 'All Sectors' || item.category === selectedCategory;
+
+      return matchesSearch && matchesCat;
+    });
 
     return list.sort((a, b) => {
       if (sortMode === 'rating') {
         return b.rating - a.rating;
       }
-      return b.votes - a.votes;
+      if (sortMode === 'votes') {
+        return b.votes - a.votes;
+      }
+      return b.createdAt - a.createdAt;
     });
-  }, [ideas, searchQuery, sortMode]);
-
-  const handleSortChange = (mode: SortMode) => {
-    if (mode !== sortMode) {
-      tap('light');
-      setSortMode(mode);
-    }
-  };
+  }, [ideas, searchQuery, selectedCategory, sortMode]);
 
   const onRefresh = () => {
     setRefreshing(true);
     tap('medium');
     setTimeout(() => {
       setRefreshing(false);
-    }, 500);
-  };
-
-  const handleSegmentLayout = (e: LayoutChangeEvent) => {
-    setSegmentWidth(e.nativeEvent.layout.width);
+    }, 400);
   };
 
   return (
@@ -180,73 +169,116 @@ export default function IdeasScreen() {
           }
           ListHeaderComponent={
             <Animated.View entering={FadeInDown.duration(300)}>
-              {/* Dashboard Stats Strip (Responsive for Web & Mobile) */}
+              {/* Executive Metrics Dashboard Ribbon */}
               <View style={styles.statsStripContainer}>
                 {isDesktop ? (
-                  // Desktop 3-Card Metrics Row
-                  <View style={styles.desktopStatsRow}>
+                  <View style={styles.desktopStatsGrid}>
+                    {/* Stat 1 */}
                     <View
                       style={[
-                        styles.desktopStatCard,
+                        styles.executiveStatCard,
                         { backgroundColor: theme.card, borderColor: theme.cardBorder },
-                        theme.shadow.soft,
+                        theme.shadow.card,
                       ]}
                     >
-                      <View style={[styles.statIconBadge, { backgroundColor: theme.cardSecondary }]}>
-                        <Feather name="layers" size={20} color={theme.primary} />
+                      <View style={styles.statHeaderRow}>
+                        <Text style={[styles.statTitle, { color: theme.muted }]}>ACTIVE DEAL FLOW</Text>
+                        <Feather name="layers" size={16} color={theme.primary} />
                       </View>
-                      <View style={styles.statContentCol}>
-                        <Text style={[styles.statValue, { color: theme.text }]}>
-                          {displayIdeasCount}
+                      <Text style={[styles.statMainValue, { color: theme.text }]}>
+                        {displayIdeasCount} Ventures
+                      </Text>
+                      <View style={styles.statTrendRow}>
+                        <Feather name="trending-up" size={12} color={theme.success} />
+                        <Text style={[styles.statTrendText, { color: theme.success }]}>
+                          100% Curated
                         </Text>
-                        <Text style={[styles.statLabel, { color: theme.muted }]}>
-                          Total Ideas Evaluated
+                        <Text style={[styles.statSubInfo, { color: theme.muted }]}>
+                          across 5 sectors
                         </Text>
                       </View>
                     </View>
 
+                    {/* Stat 2 */}
                     <View
                       style={[
-                        styles.desktopStatCard,
+                        styles.executiveStatCard,
                         { backgroundColor: theme.card, borderColor: theme.cardBorder },
-                        theme.shadow.soft,
+                        theme.shadow.card,
                       ]}
                     >
-                      <View style={[styles.statIconBadge, { backgroundColor: theme.cardSecondary }]}>
-                        <Feather name="activity" size={20} color={theme.gold} />
+                      <View style={styles.statHeaderRow}>
+                        <Text style={[styles.statTitle, { color: theme.muted }]}>SYNDICATE BACKING</Text>
+                        <Feather name="activity" size={16} color={theme.gold} />
                       </View>
-                      <View style={styles.statContentCol}>
-                        <Text style={[styles.statValue, { color: theme.gold }]}>
-                          {displayVotesCount}
+                      <Text style={[styles.statMainValue, { color: theme.text }]}>
+                        {displayVotesCount} Votes
+                      </Text>
+                      <View style={styles.statTrendRow}>
+                        <Feather name="check" size={12} color={theme.gold} />
+                        <Text style={[styles.statTrendText, { color: theme.gold }]}>
+                          Verified Signals
                         </Text>
-                        <Text style={[styles.statLabel, { color: theme.muted }]}>
-                          Community Votes Cast
+                        <Text style={[styles.statSubInfo, { color: theme.muted }]}>
+                          anti-sybil locked
                         </Text>
                       </View>
                     </View>
 
+                    {/* Stat 3 */}
                     <View
                       style={[
-                        styles.desktopStatCard,
+                        styles.executiveStatCard,
                         { backgroundColor: theme.card, borderColor: theme.cardBorder },
-                        theme.shadow.soft,
+                        theme.shadow.card,
                       ]}
                     >
-                      <View style={[styles.statIconBadge, { backgroundColor: theme.cardSecondary }]}>
-                        <Feather name="award" size={20} color={theme.accent} />
+                      <View style={styles.statHeaderRow}>
+                        <Text style={[styles.statTitle, { color: theme.muted }]}>AI BENCHMARK INDEX</Text>
+                        <Feather name="cpu" size={16} color={theme.accent} />
                       </View>
-                      <View style={styles.statContentCol}>
-                        <Text style={[styles.statValue, { color: theme.accent }]}>
-                          {displayAvgScore}/100
+                      <Text style={[styles.statMainValue, { color: theme.text }]}>
+                        {displayAvgScore}/100
+                      </Text>
+                      <View style={styles.statTrendRow}>
+                        <Feather name="bar-chart-2" size={12} color={theme.accent} />
+                        <Text style={[styles.statTrendText, { color: theme.accent }]}>
+                          Median: 87
                         </Text>
-                        <Text style={[styles.statLabel, { color: theme.muted }]}>
-                          Average AI Score
+                        <Text style={[styles.statSubInfo, { color: theme.muted }]}>
+                          simulated VCs
+                        </Text>
+                      </View>
+                    </View>
+
+                    {/* Stat 4 */}
+                    <View
+                      style={[
+                        styles.executiveStatCard,
+                        { backgroundColor: theme.card, borderColor: theme.cardBorder },
+                        theme.shadow.card,
+                      ]}
+                    >
+                      <View style={styles.statHeaderRow}>
+                        <Text style={[styles.statTitle, { color: theme.muted }]}>TOP MOAT VENTURE</Text>
+                        <Feather name="award" size={16} color={theme.success} />
+                      </View>
+                      <Text style={[styles.statMainValue, { color: theme.text }]} numberOfLines={1}>
+                        {topIdea ? topIdea.name : 'N/A'}
+                      </Text>
+                      <View style={styles.statTrendRow}>
+                        <Feather name="star" size={12} color={theme.success} />
+                        <Text style={[styles.statTrendText, { color: theme.success }]}>
+                          Score {topIdea?.rating || 0}/100
+                        </Text>
+                        <Text style={[styles.statSubInfo, { color: theme.muted }]}>
+                          Unicorn Tier
                         </Text>
                       </View>
                     </View>
                   </View>
                 ) : (
-                  // Mobile Single-Pill Stats Strip
+                  // Mobile Stats Pill
                   <View
                     style={[
                       styles.statsStrip,
@@ -262,7 +294,7 @@ export default function IdeasScreen() {
                         {displayIdeasCount}
                       </Text>
                       <Text style={[styles.statLabel, { color: theme.muted }]}>
-                        Total Ideas
+                        Ventures
                       </Text>
                     </View>
 
@@ -273,7 +305,7 @@ export default function IdeasScreen() {
                         {displayVotesCount}
                       </Text>
                       <Text style={[styles.statLabel, { color: theme.muted }]}>
-                        Total Votes
+                        Votes
                       </Text>
                     </View>
 
@@ -291,7 +323,49 @@ export default function IdeasScreen() {
                 )}
               </View>
 
-              {/* Desktop & Mobile Search + Sort Section */}
+              {/* Category Filter Pills Bar */}
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={styles.categoryScroll}
+                contentContainerStyle={styles.categoryScrollContent}
+              >
+                {CATEGORIES.map((cat) => {
+                  const isSelected = selectedCategory === cat;
+                  return (
+                    <Pressable
+                      key={cat}
+                      onPress={() => {
+                        tap('light');
+                        setSelectedCategory(cat);
+                      }}
+                      style={[
+                        styles.catPill,
+                        {
+                          backgroundColor: isSelected ? theme.primary : theme.card,
+                          borderColor: isSelected ? theme.primary : theme.cardBorder,
+                        },
+                        isSelected && theme.shadow.soft,
+                      ]}
+                      accessibilityRole="button"
+                    >
+                      <Text
+                        style={[
+                          styles.catPillText,
+                          {
+                            color: isSelected ? '#FFFFFF' : theme.textSecondary,
+                            fontFamily: isSelected ? 'Inter_700Bold' : 'Inter_500Medium',
+                          },
+                        ]}
+                      >
+                        {cat}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
+
+              {/* Search & Sort Bar Row */}
               <View
                 style={[
                   styles.filterSection,
@@ -304,17 +378,17 @@ export default function IdeasScreen() {
                     styles.searchBar,
                     isDesktop && styles.desktopSearchBar,
                     {
-                      backgroundColor: theme.inputBg,
+                      backgroundColor: theme.card,
                       borderColor: theme.inputBorder,
                     },
-                    theme.shadow.soft,
+                    theme.shadow.card,
                   ]}
                 >
-                  <Feather name="search" size={17} color={theme.muted} style={styles.searchIcon} />
+                  <Feather name="search" size={16} color={theme.muted} style={styles.searchIcon} />
                   <TextInput
                     value={searchQuery}
                     onChangeText={setSearchQuery}
-                    placeholder="Search startups by name, tagline, or keyword..."
+                    placeholder="Search by venture name, thesis, tech moat, or TAM..."
                     placeholderTextColor={theme.muted}
                     style={[styles.searchInput, { color: theme.text }]}
                     clearButtonMode="while-editing"
@@ -328,175 +402,133 @@ export default function IdeasScreen() {
                       style={styles.clearBtn}
                       accessibilityLabel="Clear search"
                     >
-                      <Feather name="x-circle" size={16} color={theme.muted} />
+                      <Feather name="x-circle" size={15} color={theme.muted} />
                     </Pressable>
                   )}
                 </View>
 
-                {/* Meta Count & Segmented Sort */}
-                <View style={[styles.sortControlsRow, isDesktop && styles.desktopSortControls]}>
-                  {!isDesktop && (
-                    <View style={styles.metaRow}>
-                      <Text style={[styles.sectionTitle, { color: theme.text }]}>
-                        Explore Ideas
-                      </Text>
-                      <View
-                        style={[
-                          styles.countPill,
-                          {
-                            backgroundColor: theme.cardSecondary,
-                            borderColor: theme.cardBorder,
-                          },
-                        ]}
-                      >
-                        <Text style={[styles.countText, { color: theme.accent }]}>
-                          {filteredIdeas.length} {filteredIdeas.length === 1 ? 'idea' : 'ideas'}
-                        </Text>
-                      </View>
-                    </View>
-                  )}
-
-                  {/* Segmented Control with Sliding Indicator */}
-                  <View
-                    onLayout={handleSegmentLayout}
+                {/* Sort Mode Controls */}
+                <View style={styles.sortTabsGroup}>
+                  <Pressable
+                    onPress={() => {
+                      tap('light');
+                      setSortMode('rating');
+                    }}
                     style={[
-                      styles.segmentedContainer,
-                      isDesktop && { minWidth: 260 },
-                      {
-                        backgroundColor: theme.cardSecondary,
-                        borderColor: theme.cardBorder,
-                      },
+                      styles.sortBtn,
+                      sortMode === 'rating' && [styles.activeSortBtn, { backgroundColor: theme.primary, borderColor: theme.primary }],
+                      sortMode !== 'rating' && { backgroundColor: theme.card, borderColor: theme.cardBorder },
                     ]}
                   >
-                    {halfWidth > 0 && (
-                      <Animated.View
-                        pointerEvents="none"
-                        style={[styles.slidingSegmentIndicator, animatedIndicatorStyle]}
-                      >
-                        <LinearGradient
-                          colors={theme.gradients.primary}
-                          start={{ x: 0, y: 0 }}
-                          end={{ x: 1, y: 1 }}
-                          style={styles.segmentGradient}
-                        />
-                      </Animated.View>
-                    )}
-
-                    {/* Rating Segment */}
-                    <Pressable
-                      onPress={() => handleSortChange('rating')}
-                      style={styles.segmentButton}
-                      accessibilityRole="button"
-                      accessibilityLabel="Sort by rating"
+                    <Feather
+                      name="star"
+                      size={13}
+                      color={sortMode === 'rating' ? '#FFFFFF' : theme.muted}
+                    />
+                    <Text
+                      style={[
+                        styles.sortBtnText,
+                        { color: sortMode === 'rating' ? '#FFFFFF' : theme.textSecondary },
+                      ]}
                     >
-                      <Feather
-                        name="star"
-                        size={14}
-                        color={sortMode === 'rating' ? '#FFFFFF' : theme.muted}
-                      />
-                      <Text
-                        style={[
-                          styles.segmentText,
-                          {
-                            color: sortMode === 'rating' ? '#FFFFFF' : theme.muted,
-                            fontFamily: sortMode === 'rating' ? 'Inter_700Bold' : 'Inter_600SemiBold',
-                          },
-                        ]}
-                      >
-                        Top Rating
-                      </Text>
-                    </Pressable>
+                      Highest Score
+                    </Text>
+                  </Pressable>
 
-                    {/* Votes Segment */}
-                    <Pressable
-                      onPress={() => handleSortChange('votes')}
-                      style={styles.segmentButton}
-                      accessibilityRole="button"
-                      accessibilityLabel="Sort by votes"
+                  <Pressable
+                    onPress={() => {
+                      tap('light');
+                      setSortMode('votes');
+                    }}
+                    style={[
+                      styles.sortBtn,
+                      sortMode === 'votes' && [styles.activeSortBtn, { backgroundColor: theme.primary, borderColor: theme.primary }],
+                      sortMode !== 'votes' && { backgroundColor: theme.card, borderColor: theme.cardBorder },
+                    ]}
+                  >
+                    <Feather
+                      name="activity"
+                      size={13}
+                      color={sortMode === 'votes' ? '#FFFFFF' : theme.muted}
+                    />
+                    <Text
+                      style={[
+                        styles.sortBtnText,
+                        { color: sortMode === 'votes' ? '#FFFFFF' : theme.textSecondary },
+                      ]}
                     >
-                      <Feather
-                        name="activity"
-                        size={14}
-                        color={sortMode === 'votes' ? '#FFFFFF' : theme.muted}
-                      />
-                      <Text
-                        style={[
-                          styles.segmentText,
-                          {
-                            color: sortMode === 'votes' ? '#FFFFFF' : theme.muted,
-                            fontFamily: sortMode === 'votes' ? 'Inter_700Bold' : 'Inter_600SemiBold',
-                          },
-                        ]}
-                      >
-                        Most Votes
-                      </Text>
-                    </Pressable>
-                  </View>
+                      Most Backed
+                    </Text>
+                  </Pressable>
+
+                  <Pressable
+                    onPress={() => {
+                      tap('light');
+                      setSortMode('recent');
+                    }}
+                    style={[
+                      styles.sortBtn,
+                      sortMode === 'recent' && [styles.activeSortBtn, { backgroundColor: theme.primary, borderColor: theme.primary }],
+                      sortMode !== 'recent' && { backgroundColor: theme.card, borderColor: theme.cardBorder },
+                    ]}
+                  >
+                    <Feather
+                      name="clock"
+                      size={13}
+                      color={sortMode === 'recent' ? '#FFFFFF' : theme.muted}
+                    />
+                    <Text
+                      style={[
+                        styles.sortBtnText,
+                        { color: sortMode === 'recent' ? '#FFFFFF' : theme.textSecondary },
+                      ]}
+                    >
+                      Recent
+                    </Text>
+                  </Pressable>
+                </View>
+              </View>
+
+              {/* Results Count Line */}
+              <View style={styles.resultsHeaderRow}>
+                <Text style={[styles.resultsTitle, { color: theme.text }]}>
+                  {selectedCategory === 'All Sectors' ? 'All Curated Ventures' : selectedCategory}
+                </Text>
+                <View style={[styles.resultsCountBadge, { backgroundColor: theme.cardSecondary, borderColor: theme.cardBorder }]}>
+                  <Text style={[styles.resultsCountText, { color: theme.primary }]}>
+                    {filteredIdeas.length} {filteredIdeas.length === 1 ? 'Deal' : 'Deals'}
+                  </Text>
                 </View>
               </View>
             </Animated.View>
           }
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
-              <View style={styles.emptyIllustration}>
-                <LinearGradient
-                  colors={theme.gradients.primary}
-                  style={[styles.emptyOuterRing, theme.shadow.glow]}
-                >
-                  <View
-                    style={[
-                      styles.emptyInnerCircle,
-                      { backgroundColor: theme.cardSecondary },
-                    ]}
-                  >
-                    <Feather name="send" size={38} color={theme.accent} />
-                  </View>
-                </LinearGradient>
-                <View
-                  style={[
-                    styles.sparkleBadge,
-                    { backgroundColor: theme.card, borderColor: theme.cardBorder },
-                  ]}
-                >
-                  <Feather name="zap" size={14} color={theme.gold} />
-                </View>
+              <View
+                style={[
+                  styles.emptyIconCircle,
+                  { backgroundColor: theme.cardSecondary, borderColor: theme.cardBorder },
+                ]}
+              >
+                <Feather name="search" size={28} color={theme.muted} />
               </View>
-
               <Text style={[styles.emptyTitle, { color: theme.text }]}>
-                {searchQuery ? 'No Startups Found' : 'No Startup Ideas Yet'}
+                No Ventures Match Query
               </Text>
               <Text style={[styles.emptySubtitle, { color: theme.muted }]}>
-                {searchQuery
-                  ? `No startup concepts matched "${searchQuery}". Try a different keyword or reset search.`
-                  : 'Be the first visionary to evaluate your startup concept with our AI investor engine.'}
+                Try adjusting your search criteria or sector filter to discover more startup evaluations.
               </Text>
               <Pressable
                 onPress={() => {
-                  tap('medium');
-                  if (searchQuery) {
-                    setSearchQuery('');
-                  } else {
-                    router.push('/(tabs)/submit');
-                  }
+                  tap('light');
+                  setSearchQuery('');
+                  setSelectedCategory('All Sectors');
                 }}
-                style={styles.submitFirstBtn}
-                accessibilityRole="button"
+                style={[styles.resetSearchBtn, { backgroundColor: theme.cardSecondary, borderColor: theme.cardBorder }]}
               >
-                <LinearGradient
-                  colors={theme.gradients.primary}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={[styles.submitFirstGradient, theme.shadow.soft]}
-                >
-                  <Feather
-                    name={searchQuery ? 'rotate-ccw' : 'plus-circle'}
-                    size={17}
-                    color="#FFFFFF"
-                  />
-                  <Text style={styles.submitFirstText}>
-                    {searchQuery ? 'Clear Search' : 'Submit Startup Idea'}
-                  </Text>
-                </LinearGradient>
+                <Text style={[styles.resetSearchText, { color: theme.primary }]}>
+                  Reset All Filters
+                </Text>
               </Pressable>
             </View>
           }
@@ -513,55 +545,65 @@ const styles = StyleSheet.create({
   webContentWrapper: {
     flex: 1,
     width: '100%',
-    maxWidth: 1200,
+    maxWidth: 1240,
     alignSelf: 'center',
+    paddingHorizontal: 16,
   },
   listContent: {
-    paddingHorizontal: 8,
+    paddingTop: 16,
   },
   gridColumnWrapper: {
     justifyContent: 'space-between',
-    paddingHorizontal: 8,
   },
   statsStripContainer: {
-    paddingHorizontal: 12,
-    paddingTop: 16,
-    paddingBottom: 6,
+    marginBottom: 16,
   },
-  // Desktop 3-Card Metrics Row
-  desktopStatsRow: {
+  desktopStatsGrid: {
     flexDirection: 'row',
-    gap: 16,
-    width: '100%',
+    gap: 12,
   },
-  desktopStatCard: {
+  executiveStatCard: {
     flex: 1,
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: 16,
+  },
+  statHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  statTitle: {
+    fontSize: 10.5,
+    fontFamily: 'Inter_700Bold',
+    letterSpacing: 0.6,
+  },
+  statMainValue: {
+    fontSize: 20,
+    fontFamily: 'Inter_800ExtraBold',
+    letterSpacing: -0.5,
+    marginBottom: 6,
+  },
+  statTrendRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 18,
-    borderRadius: 20,
-    borderWidth: 1.2,
-    gap: 14,
+    gap: 5,
   },
-  statIconBadge: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
-    justifyContent: 'center',
-    alignItems: 'center',
+  statTrendText: {
+    fontSize: 11,
+    fontFamily: 'Inter_700Bold',
   },
-  statContentCol: {
-    justifyContent: 'center',
+  statSubInfo: {
+    fontSize: 11,
+    fontFamily: 'Inter_500Medium',
   },
-  // Mobile Strip
   statsStrip: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-around',
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderRadius: 20,
-    borderWidth: 1.2,
+    borderRadius: 12,
+    borderWidth: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 8,
   },
   statBox: {
     flex: 1,
@@ -569,187 +611,150 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   statValue: {
-    fontSize: 22,
     fontFamily: 'Inter_800ExtraBold',
+    fontSize: 18,
     letterSpacing: -0.5,
   },
   statLabel: {
-    fontSize: 11,
-    fontFamily: 'Inter_600SemiBold',
+    fontFamily: 'Inter_500Medium',
+    fontSize: 10.5,
     marginTop: 2,
+    letterSpacing: 0.2,
   },
   statDivider: {
     width: 1,
-    height: 28,
+    height: '65%',
+    alignSelf: 'center',
+  },
+  categoryScroll: {
+    marginBottom: 14,
+  },
+  categoryScrollContent: {
+    flexDirection: 'row',
+    gap: 8,
+    paddingVertical: 2,
+  },
+  catPill: {
+    paddingVertical: 6,
+    paddingHorizontal: 13,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  catPillText: {
+    fontSize: 12,
+    letterSpacing: 0.1,
   },
   filterSection: {
-    paddingHorizontal: 12,
-    paddingTop: 12,
-    paddingBottom: 10,
+    marginBottom: 16,
     gap: 10,
   },
   desktopFilterSectionRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 16,
   },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    height: 48,
-    borderRadius: 16,
-    borderWidth: 1.2,
-    paddingHorizontal: 14,
+    paddingHorizontal: 12,
+    height: 42,
+    borderRadius: 10,
+    borderWidth: 1,
   },
   desktopSearchBar: {
     flex: 1,
-    height: 48,
-  },
-  sortControlsRow: {
-    gap: 8,
-  },
-  desktopSortControls: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    marginRight: 12,
   },
   searchIcon: {
-    marginRight: 10,
+    marginRight: 8,
   },
   searchInput: {
     flex: 1,
-    fontSize: 14,
+    height: '100%',
     fontFamily: 'Inter_500Medium',
+    fontSize: 13,
   },
   clearBtn: {
-    padding: 6,
+    padding: 4,
   },
-  metaRow: {
+  sortTabsGroup: {
+    flexDirection: 'row',
+    gap: 6,
+  },
+  sortBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 7,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    gap: 5,
+    height: 42,
+  },
+  activeSortBtn: {},
+  sortBtnText: {
+    fontSize: 12,
+    fontFamily: 'Inter_600SemiBold',
+    letterSpacing: 0.1,
+  },
+  resultsHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 6,
+    marginBottom: 12,
+    paddingHorizontal: 2,
   },
-  sectionTitle: {
-    fontSize: 20,
-    fontFamily: 'Inter_800ExtraBold',
-    letterSpacing: -0.4,
+  resultsTitle: {
+    fontSize: 14,
+    fontFamily: 'Inter_700Bold',
+    letterSpacing: -0.2,
   },
-  countPill: {
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-    borderRadius: 12,
+  resultsCountBadge: {
+    paddingVertical: 3,
+    paddingHorizontal: 8,
+    borderRadius: 6,
     borderWidth: 1,
   },
-  countText: {
-    fontSize: 12,
+  resultsCountText: {
+    fontSize: 11,
     fontFamily: 'Inter_700Bold',
-  },
-  segmentedContainer: {
-    flexDirection: 'row',
-    padding: 4,
-    borderRadius: 16,
-    borderWidth: 1.2,
-    position: 'relative',
-  },
-  slidingSegmentIndicator: {
-    position: 'absolute',
-    top: 4,
-    bottom: 4,
-    left: 4,
-    borderRadius: 12,
-    overflow: 'hidden',
-    zIndex: 1,
-  },
-  segmentGradient: {
-    flex: 1,
-    borderRadius: 12,
-  },
-  segmentButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    gap: 6,
-    zIndex: 2,
-    minHeight: 40,
-  },
-  segmentText: {
-    fontSize: 13,
-    letterSpacing: 0.1,
   },
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 28,
-    paddingVertical: 60,
+    paddingVertical: 48,
+    paddingHorizontal: 20,
   },
-  emptyIllustration: {
-    width: 96,
-    height: 96,
+  emptyIconCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    borderWidth: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 20,
-    position: 'relative',
-  },
-  emptyOuterRing: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
-    padding: 3,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  emptyInnerCircle: {
-    width: 84,
-    height: 84,
-    borderRadius: 42,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  sparkleBadge: {
-    position: 'absolute',
-    top: -2,
-    right: 2,
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    borderWidth: 1.5,
-    justifyContent: 'center',
-    alignItems: 'center',
+    marginBottom: 14,
   },
   emptyTitle: {
-    fontSize: 20,
-    fontFamily: 'Inter_800ExtraBold',
-    marginBottom: 8,
-    textAlign: 'center',
+    fontSize: 16,
+    fontFamily: 'Inter_700Bold',
+    marginBottom: 6,
   },
   emptySubtitle: {
-    fontSize: 14,
-    lineHeight: 22,
+    fontSize: 13,
     fontFamily: 'Inter_400Regular',
     textAlign: 'center',
-    marginBottom: 24,
-    maxWidth: 420,
+    maxWidth: 340,
+    lineHeight: 19,
+    marginBottom: 16,
   },
-  submitFirstBtn: {
-    borderRadius: 22,
-    overflow: 'hidden',
+  resetSearchBtn: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: 1,
   },
-  submitFirstGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 24,
-    borderRadius: 22,
-    gap: 8,
-    minHeight: 46,
-  },
-  submitFirstText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontFamily: 'Inter_700Bold',
+  resetSearchText: {
+    fontSize: 12.5,
+    fontFamily: 'Inter_600SemiBold',
   },
 });
