@@ -102,10 +102,10 @@ export const darkColors: ThemeColors = {
     ],
   },
   tabBar: {
-    bg: 'rgba(15, 23, 42, 0.95)',
+    bg: 'rgba(15, 23, 42, 0.96)',
     border: '#1E293B',
-    activeText: '#F8FAFC',
-    inactiveText: '#64748B',
+    activeText: '#FFFFFF',
+    inactiveText: '#94A3B8',
     pillBg: 'rgba(99, 102, 241, 0.2)',
   },
   shadow: {
@@ -177,11 +177,11 @@ export const lightColors: ThemeColors = {
     ],
   },
   tabBar: {
-    bg: 'rgba(255, 255, 255, 0.96)',
+    bg: 'rgba(255, 255, 255, 0.98)',
     border: '#E2E8F0',
-    activeText: '#4F46E5',
-    inactiveText: '#64748B',
-    pillBg: '#EEF2FF',
+    activeText: '#FFFFFF',
+    inactiveText: '#475569',
+    pillBg: '#4F46E5',
   },
   shadow: {
     color: '#0F172A',

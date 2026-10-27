@@ -137,14 +137,14 @@ export const FloatingTabBar: React.FC<BottomTabBarProps> = ({
             >
               <Feather
                 name={config.icon}
-                size={17}
-                color={isFocused ? theme.tabBar.activeText : theme.tabBar.inactiveText}
+                size={16}
+                color={isFocused ? '#FFFFFF' : theme.tabBar.inactiveText}
               />
               <Text
                 style={[
                   styles.tabLabel,
                   {
-                    color: isFocused ? theme.tabBar.activeText : theme.tabBar.inactiveText,
+                    color: isFocused ? '#FFFFFF' : theme.tabBar.inactiveText,
                     fontFamily: isFocused ? 'Inter_700Bold' : 'Inter_600SemiBold',
                   },
                 ]}
@@ -177,6 +177,11 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 440,
     position: 'relative',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+    elevation: 8,
   },
   slidingIndicator: {
     position: 'absolute',
